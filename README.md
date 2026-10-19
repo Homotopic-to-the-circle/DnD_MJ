@@ -1,6 +1,6 @@
 # MJ · Feuille de Perso
 
-Application du MJ pour la campagne : joueurs et codes, catalogue d'objets, envois.
+Application du MJ pour la campagne : joueurs et codes, catalogue d'objets, envois, rencontres (monstres, PV, initiative).
 
 **Application MJ : https://homotopic-to-the-circle.github.io/DnD_MJ/**
 

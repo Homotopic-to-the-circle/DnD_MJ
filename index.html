@@ -289,6 +289,47 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .dock>*{pointer-events:auto;width:100%;max-width:608px;margin:0 auto;box-sizing:border-box;box-shadow:0 3px 12px rgba(42,28,18,.28);cursor:pointer}
 .dock-haut{bottom:auto;padding-bottom:0}.dock:empty{display:none}
 .code-row{flex-wrap:nowrap}.code-row>*{box-sizing:border-box;height:38px}.code-row input{flex:1;min-width:0}.code-row button{padding:0 14px}
+.tabs button{font-size:.92rem;flex:1 1 auto;padding-left:3px;padding-right:3px}
+/* rencontres : une carte par monstre (et par joueur en combat), dans l'esprit de la carte PV de la fiche */
+.h2b>span{flex:1;min-width:0;cursor:pointer}
+.h2b .nb{font-family:var(--body);font-size:.85rem;color:var(--muted);font-style:italic;margin-left:6px}
+.parts{display:flex;flex-direction:column;gap:8px}
+.part{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:8px 10px}
+.part .ini{width:2.4ch;font-family:var(--disp);font-size:1.35rem;text-align:center;padding:0;height:auto;border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--fg)}
+.part .ini::placeholder{color:var(--muted);opacity:.7;font-size:1rem}
+.part .corps{min-width:0;display:flex;flex-direction:column;gap:3px;grid-row:span 2;align-self:start}
+.part>.ini{grid-row:span 2;align-self:center}
+.part .bas{grid-column:3;display:flex;justify-content:flex-end;align-self:start}
+.part .nom{font-weight:700;line-height:1.2}
+.part .nom a{color:inherit}
+.part .note{font-size:.88rem;font-style:italic;color:var(--muted);line-height:1.25}
+.part .chips{gap:4px}
+.part .chip{font-size:.78rem;padding:1px 7px}
+.hpm{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums lining-nums}
+.hpm button{width:30px;height:30px;padding:0;font-size:1.15rem;line-height:1}
+.hpm .val{display:flex;align-items:baseline;gap:3px}
+.hpm input{width:2.6ch;height:auto;padding:0;font-size:1.55rem;font-weight:700;text-align:center;border:none;border-bottom:1px solid var(--accent);border-radius:0;background:transparent;color:var(--accent)}
+.hpm .max{font-size:.95rem;color:var(--muted)}
+.hpm.op .signe{font-size:1.55rem;font-weight:700;color:var(--accent);width:1ch;text-align:center}
+.hpm.op input{width:4.5ch;font-size:1.3rem}
+.hpm.op button{width:auto;padding:0 10px;font-size:.95rem}
+.hpj{display:flex;align-items:baseline;gap:3px;font-variant-numeric:tabular-nums lining-nums}
+.hpj b{font-size:1.55rem;color:var(--accent)}
+.hpj .max{font-size:.95rem;color:var(--muted)}
+.hpj .tmp{font-size:.85rem;color:var(--muted);margin-left:3px}
+.part.sans{opacity:.45}
+.part.ko .nom{text-decoration:line-through;color:var(--muted)}
+.part .etat-btn{height:26px;padding:0 8px;font-size:.85rem}
+.part .panneau{grid-column:1/-1;grid-row:3;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.part .etats button{padding:5px 4px;font-size:.92rem}
+.part .etats .conc-b.on{background:var(--conc);border-color:var(--conc)}
+.part .ed{grid-column:1/-1;display:grid;grid-template-columns:1fr 4rem 32px;gap:6px}
+.part .ed input{height:34px;padding:0 8px;box-sizing:border-box;width:100%}
+.part .ed .full{grid-column:1/-1}
+.ajm{display:grid;grid-template-columns:1fr 4rem 4rem;gap:6px}
+.ajm input{height:34px;padding:0 8px;box-sizing:border-box;width:100%}
+.ajm .full{grid-column:1/-1}
+.combat-pied{display:flex;justify-content:flex-end;margin-top:2px}
 </style>
 </head>
 <body>
@@ -298,9 +339,9 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='19.10.2026 à 18:43';
+const VERSION='20.10.2026 à 02:56';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
-const ONGLETS=[['joueurs','Joueurs'],['objets','Objets'],['envois','Envois'],['campagne','Campagne']];
+const ONGLETS=[['joueurs','Joueurs'],['objets','Objets'],['envois','Envois'],['rencontres','Rencontres'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{const n=parseInt(v,10);return isNaN(n)?0:n};
 const jolieCle=c=>String(c||'').replace(/(.{4})(?=.)/g,'$1-');
@@ -318,7 +359,7 @@ async function rpc(fn,args){
 const MSG={code_mj_invalide:'Code MJ refusé.',init_invalide:'Code d’initialisation refusé (ou déjà utilisé).',code_trop_court:'Le code MJ doit faire au moins 8 caractères.',nom_manquant:'Indique un nom.',objet_inconnu:'Objet introuvable.'};
 function erreur(e){return e&&e.serveur?(MSG[e.message]||'Erreur du serveur : '+e.message):'Pas de connexion. Réessaie.'}
 async function charger(silence){
-  try{etat=await rpc('mj_etat',{p_code:code});charge=true}
+  try{etat=await rpc('mj_etat',{p_code:code});charge=true;await chargerRenc()}
   catch(e){if(e.serveur&&e.message==='code_mj_invalide'){code='';try{localStorage.removeItem(KEY+'.code')}catch(_){}}if(!silence)flash={err:1,t:erreur(e)}}
   render();
 }
@@ -349,7 +390,7 @@ function rendu(){
   if(!code){app.innerHTML=vueConnexion();return}
   if(!charge){app.innerHTML=`<h1>MJ</h1><p class="muted">Chargement…</p>`;return}
   const tabs=ONGLETS.map(([k,l])=>`<button data-a="onglet" data-o="${k}" aria-current="${ui.onglet===k}">${l}</button>`).join('');
-  const corps={joueurs:ongJoueurs,objets:ongObjets,envois:ongEnvois,campagne:ongCampagne}[ui.onglet]||ongJoueurs;
+  const corps={joueurs:ongJoueurs,objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,campagne:ongCampagne}[ui.onglet]||ongJoueurs;
   app.innerHTML=`<header class="top"><div class="row"><div class="titre"><h1>${esc(etat.campagne.nom)}</h1></div>
     <button data-a="edit" class="icone ${ui.edit?'on':''}" aria-pressed="${ui.edit}" aria-label="${ui.edit?'Terminer':'Modifier'}">${ui.edit
       ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
@@ -374,7 +415,7 @@ function ongJoueurs(){
     ?`<div class="jr"><div class="row code-row"><input data-jnom="${esc(j.id)}" value="${esc(j.nom)}" aria-label="Nom du joueur">${ui.confRetirer===j.id
         ?`<button class="dgr" data-a="retirerJOui" data-id="${esc(j.id)}">Retirer ?</button>`:`<button class="x" data-a="retirerJ" data-id="${esc(j.id)}" aria-label="Retirer ${esc(j.nom)}">✕</button>`}</div></div>`
     :`<div class="jr"><div class="l1"><b>${esc(j.nom)}</b><span class="muted">vu ${esc(quand(j.vu_le))}</span></div>
-      <div>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(j.pvMax)}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</div>
+      <div>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(pvMaxJ(j))}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</div>
       ${j.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(j.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(j.cle))}">Copier</button></div>`:''}
       ${nouveauCode===j.id?'<p class="muted">Envoie ce code au joueur : il l’entre dans son app, onglet Fiche, « Sauvegarde en ligne ».</p>':''}</div>`;
   return `<section><h2>Joueurs</h2>${js.length?js.map(ligne).join(''):'<p class="muted">Aucun joueur. Ajoute-les ci-dessous.</p>'}</section>
@@ -430,24 +471,184 @@ function ongEnvois(){
 function ongCampagne(){
   return `<section><h2>Campagne</h2>${ui.edit?`<label class="lab">Nom<input id="cnom" value="${esc(etat.campagne.nom)}"></label><button data-a="renommer">Enregistrer le nom</button>`
       :`<div><b>${esc(etat.campagne.nom)}</b> · ${etat.joueurs.length} joueur(s) · ${etat.objets.length} objet(s)</div>`}</section>
-    <section><h2>Export complet</h2><p class="muted">Toutes les fiches, le catalogue et les envois dans un seul fichier. À ranger sur ton kDrive de temps en temps.</p>
+    <section><h2>Export complet</h2><p class="muted">Toutes les fiches, le catalogue, les envois et les rencontres dans un seul fichier. À ranger sur ton kDrive de temps en temps.</p>
       <button data-a="exporter">Télécharger l’export</button></section>
     <section><h2>Cet appareil</h2><p class="muted">Version du ${esc(VERSION)}.</p><button data-a="majApp">Mettre à jour l’application</button>${ui.confSortir?`<p>Oublier le code MJ sur cet appareil ?</p><div class="row"><button class="dgr" data-a="sortirOui">Oui, se déconnecter</button><button data-a="confNon">Annuler</button></div>`
       :`<button data-a="sortir">Se déconnecter</button>`}</section>`;
 }
+
+/* ---------- rencontres ----------
+   Un seul document par campagne (sections, monstres, PV, initiatives), gardé aussi sur l'appareil :
+   chaque modification est écrite tout de suite ici, puis envoyée au serveur ; si l'envoi échoue, il est retenté. */
+const RK=KEY+'.renc';
+const ETATS=['À terre','Agrippé','Assourdi','Aveuglé','Charmé','Effrayé','Empoisonné','Entravé','Étourdi','Inconscient','Invisible','Neutralisé','Paralysé','Pétrifié'];
+let renc=[],live=[],rencCharge=false,rver=0,rTimer=null,rErr=false;
+const rid=()=>Math.random().toString(36).slice(2,10);
+function rLocal(){try{return JSON.parse(localStorage.getItem(RK)||'null')}catch(e){return null}}
+function rEcrire(sale){try{localStorage.setItem(RK,JSON.stringify({doc:renc,sale}))}catch(e){}}
+/* documents d'avant : combat {init,…} → init gardée sur la rencontre */
+function rMigrer(d){(d||[]).forEach(s=>{s.monstres=s.monstres||[];if(s.combat&&typeof s.combat==='object'){s.init=Object.assign({},s.combat.init,s.init);s.combat=true}s.init=s.init||{};s.combat=!!s.combat;
+  s.monstres.forEach(m=>{m.etats=m.etats||{};m.note=m.note||''})});return d}
+async function chargerRenc(){
+  try{const r=await rpc('mj_rencontres',{p_code:code});live=r.joueurs||[];
+    if(!rencCharge){const loc=rLocal();
+      if(loc&&loc.sale&&Array.isArray(loc.doc)){renc=rMigrer(loc.doc);rPlanifier(0)}else{renc=rMigrer(Array.isArray(r.rencontres)?r.rencontres:[]);rEcrire(false)}
+      rencCharge=true}}
+  catch(e){if(!rencCharge){const loc=rLocal();if(loc&&Array.isArray(loc.doc)){renc=rMigrer(loc.doc);rencCharge=true}}}
+}
+function rModifie(){rver++;rEcrire(true);rPlanifier(800)}
+function rPlanifier(ms){clearTimeout(rTimer);rTimer=setTimeout(rEnvoyer,ms)}
+async function rEnvoyer(){
+  if(!rencCharge)return;const v=rver;
+  try{await rpc('mj_rencontres_sauver',{p_code:code,p_doc:renc});if(v===rver)rEcrire(false);rErr=false}
+  catch(e){if(!rErr){rErr=true;flash={err:1,t:'Rencontres pas encore enregistrées en ligne (gardées sur cet appareil, nouvel essai automatique).'};renderDock()}rPlanifier(10000)}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&rTimer&&(rLocal()||{}).sale){clearTimeout(rTimer);rEnvoyer()}});
+const sec=id=>renc.find(x=>x.id===id);
+/* « https://www.aidedd.org/monster/fr/chef-gobelin » ou « Chef gobelin » → nom + lien */
+function lireMonstre(t){
+  t=t.trim();const m=t.match(/aidedd\.org\/monster\/(?:fr\/)?([^/?#\s]+)/i);
+  if(m){const n=decodeURIComponent(m[1]).replace(/-/g,' ');return{nom:n.charAt(0).toUpperCase()+n.slice(1),url:t.startsWith('http')?t:'https://'+t}}
+  const slug=t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/['’]/g,'-').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return{nom:t,url:slug?'https://www.aidedd.org/monster/fr/'+slug:''};
+}
+const vide=v=>String(v??'').trim()==='';
+const mKo=m=>!vide(m.pv)&&num(m.pv)<=0;
+const pvMaxJ=j=>{const l=live.find(x=>x.id===j.id);return l&&!vide(l.pvMax)?l.pvMax:j.pvMax};
+const hpJ=j=>`<b>${esc(j.pv??'?')}</b><span class="max">/ ${esc(j.pvMax??'?')}</span>${num(j.pvTemp)>0?`<span class="tmp">+${esc(j.pvTemp)}</span>`:''}`;
+function chipsM(s,m){
+  const l=[m.conc?'<span class="chip conc">Concentration</span>':'',...ETATS.filter(n=>m.etats[n]).map(n=>`<span class="chip">${esc(n)}</span>`)].join('');
+  return l?`<div class="chips">${l}</div>`:'';
+}
+function chipsJ(j){
+  const l=[j.conc?`<span class="chip conc">Concentration${j.conc!=='?'?' : '+esc(j.conc):''}</span>`:'',...Object.keys(j.etats||{}).filter(k=>j.etats[k]).map(n=>`<span class="chip">${esc(n)}</span>`)].join('');
+  return l?`<div class="chips">${l}</div>`:'';
+}
+const iniIn=(s,k,ph)=>`<input class="ini" data-ini="${esc(s.id)}|${esc(k)}" inputmode="numeric" value="${esc(s.init[k]??'')}" placeholder="${esc(ph||'–')}" aria-label="Initiative">`;
+function carteM(s,m,sans){
+  const k='m:'+m.id;
+  if(ui.edit)return `<div class="card part">${iniIn(s,k)}<div class="corps ed" style="grid-column:2/-1">
+      <input data-mf="nom" data-k2="${esc(s.id)}|${esc(m.id)}" value="${esc(m.nom)}" aria-label="Nom" placeholder="Nom">
+      <input data-mf="pvMax" data-k2="${esc(s.id)}|${esc(m.id)}" value="${esc(m.pvMax)}" inputmode="numeric" placeholder="PV" aria-label="PV max">
+      <button class="x" data-a="retirerM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" aria-label="Retirer ${esc(m.nom)}">✕</button>
+      <input class="full" data-mf="note" data-k2="${esc(s.id)}|${esc(m.id)}" value="${esc(m.note)}" placeholder="Note (ex. figurine à la hache)" aria-label="Note">
+      <input class="full" data-mf="url" data-k2="${esc(s.id)}|${esc(m.id)}" value="${esc(m.url)}" placeholder="Lien AideDD" inputmode="url" aria-label="Lien AideDD"></div></div>`;
+  const ouvert=ui.etatsM===m.id;
+  return `<div class="card part ${sans?'sans':''} ${mKo(m)?'ko':''}">${iniIn(s,k)}
+    <div class="corps"><span class="nom">${m.url?`<a class="ext" href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nom)}</a>`:esc(m.nom)}</span>
+      ${m.note?`<span class="note">${esc(m.note)}</span>`:''}${chipsM(s,m)}</div>
+    ${ui.hpOp&&ui.hpOp.m===m.id?`<div class="hpm op"><span class="signe">${ui.hpOp.d<0?'−':'+'}</span><input data-op="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" placeholder="${ui.hpOp.d<0?'dégâts':'soins'}" aria-label="${ui.hpOp.d<0?'PV retirés':'PV ajoutés'}"><button class="pri" data-a="opOk">OK</button></div>`
+    :`<div class="hpm"><button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="-1" aria-label="Retirer des PV">−</button>
+      <span class="val"><input data-mpv="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" value="${esc(m.pv)}" aria-label="PV de ${esc(m.nom)}"><span class="max">/ ${vide(m.pvMax)?'?':esc(m.pvMax)}</span></span>
+      <button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="1" aria-label="Ajouter des PV">+</button></div>`}
+    <div class="panneau" style="${ouvert?'':'display:none'}">${ouvert?`<div class="etats"><button class="conc-b ${m.conc?'on':''}" data-a="concM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" aria-pressed="${!!m.conc}">Concentration</button>${ETATS.map(n=>`<button class="${m.etats[n]?'on':''}" data-a="etatM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-n="${esc(n)}" aria-pressed="${!!m.etats[n]}">${esc(n)}</button>`).join('')}</div>`:''}</div>
+    <div class="bas"><button class="etat-btn ${ouvert?'on':''}" data-a="etatsM" data-s="${esc(s.id)}" data-m="${esc(m.id)}">États</button></div></div>`;
+}
+function carteJ(s,j,sans){
+  return `<div class="card part ${sans?'sans':''}">${iniIn(s,'j:'+j.id,j.init)}
+    <div class="corps"><span class="nom">${esc(j.perso||j.nom)}</span>${j.perso&&j.perso!==j.nom?`<span class="note">${esc(j.nom)}</span>`:''}${chipsJ(j)}</div>
+    <div class="hpj" data-jpv="${esc(j.id)}">${hpJ(j)}</div></div>`;
+}
+/* ordre d'initiative : du plus grand au plus petit, joueurs d'abord à égalité ; sans initiative en dernier, grisés */
+function ordre(s,avecJoueurs){
+  const l=[...(avecJoueurs?live.filter(j=>j.pv!=null).map(j=>({k:'j:'+j.id,j})):[]),...s.monstres.map(m=>({k:'m:'+m.id,m}))]
+    .map(x=>Object.assign(x,{v:vide(s.init[x.k])?null:num(s.init[x.k])}));
+  const avec=l.filter(x=>x.v!=null).sort((a,b)=>b.v-a.v||(a.j?-1:0)-(b.j?-1:0));
+  return [...avec,...l.filter(x=>x.v==null)];
+}
+function formMonstre(s){
+  return `<div class="ajm" data-ajm="${esc(s.id)}"><input data-k="q" placeholder="Lien AideDD ou nom" inputmode="url" autocapitalize="sentences" aria-label="Lien AideDD ou nom du monstre">
+    <input data-k="pv" placeholder="PV" inputmode="numeric" aria-label="PV"><input data-k="ini" placeholder="Init." inputmode="numeric" aria-label="Initiative">
+    <input class="full" data-k="note" placeholder="Note (ex. figurine à la hache)" aria-label="Note">
+    <button class="full" data-a="ajoutM" data-s="${esc(s.id)}">Ajouter le monstre</button></div>
+    <a class="ext lab" href="https://www.aidedd.org/monster/fr/" target="_blank" rel="noopener">Liste des monstres 5.5 ↗</a>`;
+}
+function ongRencontres(){
+  if(!rencCharge)return `<section><h2>Rencontres</h2><p class="muted">Rencontres pas encore chargées (pas de connexion ?).</p><button data-a="rRecharger">Réessayer</button></section>`;
+  const corpsS=s=>{
+    const l=ordre(s,s.combat&&!ui.edit).map(x=>x.j?carteJ(s,x.j,x.v==null):carteM(s,x.m,s.combat&&x.v==null)).join('');
+    return `<div class="parts">${l}</div>${ui.edit||!s.monstres.length?formMonstre(s):''}
+      ${s.combat&&!ui.edit?`<div class="combat-pied"><button class="btn-s" data-a="fin" data-s="${esc(s.id)}">Fin du combat</button></div>`:''}
+      ${ui.edit?`<div class="row" style="justify-content:end">${ui.confRetirer===s.id
+        ?`<button class="dgr btn-s" data-a="retirerSOui" data-s="${esc(s.id)}">Supprimer la rencontre ?</button><button class="btn-s" data-a="confNon">Annuler</button>`
+        :`<button class="btn-s" data-a="retirerS" data-s="${esc(s.id)}">Supprimer la rencontre</button>`}</div>`:''}`;
+  };
+  const ouverte=s=>s.combat||ui.edit||(ui.ouvertes||{})[s.id];
+  const bloc=s=>`<section><h2 class="h2b">${ui.edit?`<input data-snom="${esc(s.id)}" value="${esc(s.nom)}" aria-label="Nom de la rencontre" style="flex:1;min-width:0;height:34px;padding:0 8px">`
+      :`<span data-a="ouvrir" data-s="${esc(s.id)}">${esc(s.nom)}<span class="nb">${s.monstres.length} monstre${s.monstres.length>1?'s':''}${ouverte(s)?'':' ▸'}</span></span>`}
+      ${!ui.edit&&!s.combat?`<button data-a="combat" data-s="${esc(s.id)}">Combat</button>`:''}</h2>${ouverte(s)?corpsS(s):''}</section>`;
+  return `${renc.map(bloc).join('')||'<section><h2>Rencontres</h2><p class="muted">Aucune rencontre. Crée-en une ci-dessous, puis ajoute ses monstres.</p></section>'}
+    <section><h2>Nouvelle rencontre</h2><div class="row code-row"><input id="rnom" placeholder="Nom (ex. Tour dans la forêt d’Yverbrul)"><button data-a="ajoutS">Créer</button></div></section>`;
+}
+function rClic(a,b){
+  if(a==='rRecharger'){chargerRenc().then(render);return true}
+  if(!rencCharge)return false;
+  const s=b.dataset.s?sec(b.dataset.s):null,m=s&&b.dataset.m?s.monstres.find(x=>x.id===b.dataset.m):null;
+  switch(a){
+    case 'ouvrir':ui.ouvertes=ui.ouvertes||{};ui.ouvertes[b.dataset.s]=!ui.ouvertes[b.dataset.s];try{localStorage.setItem(KEY+'.ouvertes',JSON.stringify(ui.ouvertes))}catch(e){}render();return true;
+    case 'ajoutS':{const n=document.getElementById('rnom').value.trim();if(!n){flash={err:1,t:'Indique un nom.'};render();return true}
+      const id=rid();renc.push({id,nom:n,monstres:[],init:{},combat:false});ui.ouvertes=Object.assign(ui.ouvertes||{},{[id]:true});rModifie();render();return true}
+    case 'ajoutM':{const f=document.querySelector(`[data-ajm="${s.id}"]`),val=k=>f.querySelector(`[data-k="${k}"]`).value.trim();
+      if(!val('q')){flash={err:1,t:'Colle le lien AideDD ou écris le nom du monstre.'};render();return true}
+      const {nom,url}=lireMonstre(val('q')),pv=vide(val('pv'))?'':Math.max(0,num(val('pv'))),id=rid();
+      s.monstres.push({id,nom,url,pvMax:pv,pv,note:val('note'),etats:{},conc:false});
+      if(!vide(val('ini')))s.init['m:'+id]=num(val('ini'));
+      rModifie();render();const q=document.querySelector(`[data-ajm="${s.id}"] [data-k="q"]`);if(q)q.focus();return true}
+    case 'retirerM':s.monstres=s.monstres.filter(x=>x.id!==b.dataset.m);delete s.init['m:'+b.dataset.m];rModifie();render();return true;
+    case 'retirerS':ui.confRetirer=b.dataset.s;render();return true;
+    case 'retirerSOui':renc=renc.filter(x=>x.id!==b.dataset.s);ui.confRetirer=null;rModifie();render();return true;
+    case 'mpv':if(m){ui.hpOp={m:m.id,d:num(b.dataset.d)};render();const i=document.querySelector(`[data-op="${s.id}|${m.id}"]`);if(i)i.focus()}return true;
+    case 'opOk':{const i=document.querySelector('[data-op]');if(i)appliquerOp(i);return true}
+    case 'etatsM':ui.etatsM=ui.etatsM===b.dataset.m?null:b.dataset.m;render();return true;
+    case 'concM':if(m){m.conc=!m.conc;rModifie();render()}return true;
+    case 'etatM':if(m){m.etats[b.dataset.n]=!m.etats[b.dataset.n];if(!m.etats[b.dataset.n])delete m.etats[b.dataset.n];rModifie();render()}return true;
+    case 'combat':s.combat=true;rModifie();render();rLive();return true;
+    case 'fin':s.combat=false;ui.etatsM=null;rModifie();render();return true;
+  }
+  return false;
+}
+document.addEventListener('change',ev=>{
+  const d=ev.target.dataset||{},v=ev.target.value.trim();let k;
+  if(k=d.snom){const s=sec(k);if(s&&v){s.nom=v;rModifie()}return}
+  if(k=d.ini){const i=k.indexOf('|'),s=sec(k.slice(0,i));if(!s)return;const c=k.slice(i+1);if(vide(v))delete s.init[c];else s.init[c]=num(v);rModifie();render();return}
+  if(k=d.k2||d.mpv){const [si,mi]=k.split('|'),s=sec(si),m=s&&s.monstres.find(x=>x.id===mi);if(!m)return;
+    if(d.mpv)m.pv=Math.max(0,num(v));
+    else if(d.mf==='nom'){if(v)m.nom=v}
+    else if(d.mf==='pvMax'){const av=String(m.pvMax??'');m.pvMax=vide(v)?'':Math.max(0,num(v));if(String(m.pv??'')===av)m.pv=m.pvMax}
+    else m[d.mf]=v;
+    rModifie();render()}
+});
+/* − / + : on tape le nombre de PV retirés ou ajoutés, puis OK (ou Entrée) ; champ vide = annuler */
+function appliquerOp(i){
+  const op=ui.hpOp;ui.hpOp=null;if(!op)return;const [si,mi]=i.dataset.op.split('|'),s=sec(si),m=s&&s.monstres.find(x=>x.id===mi);
+  const n=Math.abs(num(i.value.replace(/[^0-9]/g,'')));
+  if(m&&n){m.pv=Math.max(0,num(m.pv)+op.d*n);rModifie()}render();
+}
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.dataset&&ev.target.dataset.op){ev.preventDefault();appliquerOp(ev.target)}});
+document.addEventListener('focusout',ev=>{const i=ev.target;if(!(i.dataset&&i.dataset.op))return;
+  setTimeout(()=>{if(!ui.hpOp)return;const r=ev.relatedTarget;if(r&&r.dataset&&r.dataset.a==='opOk')return;appliquerOp(i)},0)});
+
+/* PV des joueurs en direct pendant un combat, sans toucher à la saisie en cours */
+async function rLive(){
+  try{const r=await rpc('mj_rencontres',{p_code:code});live=r.joueurs||[];
+    live.forEach(j=>{const el=document.querySelector(`[data-jpv="${j.id}"]`);if(el)el.innerHTML=hpJ(j)})}catch(e){}
+}
+setInterval(()=>{if(code&&charge&&ui.onglet==='rencontres'&&renc.some(s=>s.combat)&&document.visibilityState!=='hidden')rLive()},4000);
+try{ui.ouvertes=JSON.parse(localStorage.getItem(KEY+'.ouvertes')||'{}')}catch(e){ui.ouvertes={}}
 
 /* ---------- interactions ---------- */
 function lireForm(id){const f=document.querySelector(`[data-form="${id}"]`),o={};if(!f)return o;f.querySelectorAll('[data-k]').forEach(el=>o[el.dataset.k]=el.type==='checkbox'?el.checked:el.value);o.qte=Math.max(0,num(o.qte));return o}
 function telecharger(texte,nom){try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([texte],{type:'application/json'}));a.download=nom;document.body.appendChild(a);a.click();a.remove()}catch(e){}}
 document.addEventListener('click',async ev=>{
   const b=ev.target.closest&&ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+  if(rClic(a,b))return;
   switch(a){
     case 'onglet':{const i=ONGLETS.findIndex(o=>o[0]===ui.onglet),j=ONGLETS.findIndex(o=>o[0]===b.dataset.o);anim=j>i?'in-g':j<i?'in-d':''}ui.onglet=b.dataset.o;ui.envoi=null;ui.confRetirer=null;ui.confSortir=false;try{localStorage.setItem(KEY+'.onglet',ui.onglet)}catch(e){}render();window.scrollTo(0,0);return;
-    case 'edit':ui.edit=!ui.edit;ui.confRetirer=null;ui.envoi=null;render();return;
+    case 'edit':ui.edit=!ui.edit;ui.confRetirer=null;ui.etatsM=null;ui.envoi=null;render();return;
     case 'initOui':ui.init=true;render();return;
     case 'initNon':ui.init=false;render();return;
     case 'entrer':{const c=document.getElementById('code').value;if(!c)return;code=c;
-      try{etat=await rpc('mj_etat',{p_code:code});charge=true;try{localStorage.setItem(KEY+'.code',code)}catch(e){}}
+      try{etat=await rpc('mj_etat',{p_code:code});charge=true;try{localStorage.setItem(KEY+'.code',code)}catch(e){}await chargerRenc()}
       catch(e){code='';flash={err:1,t:erreur(e)}}render();return}
     case 'initialiser':{const i=document.getElementById('init').value,c1=document.getElementById('nc1').value,c2=document.getElementById('nc2').value;
       if(c1!==c2){flash={err:1,t:'Les deux codes MJ ne sont pas identiques.'};render();return}
@@ -544,6 +745,7 @@ document.addEventListener('touchend',ev=>{
   }
 },{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code&&charge&&!ui.edit&&!ui.ajout)charger(true)});
+
 render();if(code)charger();
 /* cache hors ligne, seulement sur le vrai site */
 if(location.hostname.endsWith('github.io')&&'serviceWorker' in navigator)try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
