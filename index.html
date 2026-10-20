@@ -343,7 +343,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='20.10.2026 à 09:26';
+const VERSION='20.10.2026 à 09:43';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['joueurs','Joueurs'],['objets','Objets'],['envois','Envois'],['rencontres','Rencontres'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -625,6 +625,7 @@ document.addEventListener('change',ev=>{
 });
 /* choix dans les suggestions AideDD : objet → lien (sauf fichier joint) ; monstre → gardé jusqu'à « Ajouter » */
 function refChoisi(c,it){
+  if(c.dataset.k==='q'){const pv=c.closest('[data-ajm]').querySelector('[data-k="pv"]');if(pv&&!pv.value&&it.d.x[3])pv.value=it.d.x[3];return}
   const f=c.closest&&c.closest('[data-form]');if(!f||c.dataset.k!=='nom')return;
   const l=f.querySelector('[data-k="lien"]');if(l&&!/supabase\.co/.test(l.value))l.value=it.url;
   if(f.dataset.form==='nouveau')ui.brouillon=lireForm('nouveau');else c.dispatchEvent(new Event('change',{bubbles:true}));
@@ -760,14 +761,14 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
    Monstres, sorts, objets magiques et équipement, copiés une fois depuis AideDD sur le serveur.
    L'app les télécharge au premier lancement (puis une fois par semaine) et les garde sur l'appareil :
    les suggestions marchent ensuite hors ligne. On peut toujours écrire un nom libre. */
-const REF_K='dnd55.ref';
+const REF_K='dnd55.ref',REF_V=2;   /* REF_V : à augmenter quand le contenu des listes change (PV des monstres…) */
 let REF=null,REF_IDX={};
 try{REF=JSON.parse(localStorage.getItem(REF_K)||'null')}catch(e){}
 async function chargerRef(){
-  if(REF&&REF.recu&&Date.now()-REF.recu<7*864e5)return;
+  if(REF&&REF.v===REF_V&&REF.recu&&Date.now()-REF.recu<7*864e5)return;
   try{const r=await fetch(SUPA+'/rest/v1/rpc/ref_listes',{method:'POST',headers:{apikey:CLE_PUB,'Content-Type':'application/json'},body:'{}'});
     if(!r.ok)return;const j=await r.json();if(!j||!j.monstres)return;
-    j.recu=Date.now();REF=j;REF_IDX={};try{localStorage.setItem(REF_K,JSON.stringify(j))}catch(e){}}catch(e){}
+    j.recu=Date.now();j.v=REF_V;REF=j;REF_IDX={};try{localStorage.setItem(REF_K,JSON.stringify(j))}catch(e){}}catch(e){}
 }
 const refN=s=>String(s||'').toLowerCase().replace(/['’]/g,'').replace(/œ/g,'oe').replace(/æ/g,'ae').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const refSlug=s=>refN(s).replace(/ /g,'-');
@@ -779,7 +780,7 @@ function refListe(cle){
   const el=(nom,info,url,d)=>({nom,aff:String(nom).replace(/\|/g,' / '),n:refN(nom),info,url,d});
   const eq=(k,page)=>(REF[k]||[]).map(x=>el(x[0],{armes:'Arme',armures:'Armure',outils:'Outil',materiel:'Équipement'}[k],ADR+'regles-24/equipement/'+page+'/#:~:text='+refFrag(x[0]),{k,x}));
   let l=[];
-  if(cle==='monstres')l=(REF.monstres||[]).map(x=>el(x[0],'FP '+x[2],ADR+'monster/fr/'+x[1],{x}));
+  if(cle==='monstres')l=(REF.monstres||[]).map(x=>el(x[0],'FP '+x[2]+(x[3]?' · '+x[3]+' PV':''),ADR+'monster/fr/'+x[1],{x}));
   else if(cle==='sorts')l=(REF.sorts||[]).map(x=>el(x[0],x[2]?'niv. '+x[2]:'mineur',ADR+'spell/fr/'+x[1],{x}));
   else if(cle==='armes')l=eq('armes','armes');
   else if(cle==='objets')l=[...(REF.objets_magiques||[]).map(x=>el(x[0],x[3]||x[2],ADR+'magic-item/fr/'+x[1],{k:'magique',x})),
@@ -812,7 +813,7 @@ function refChercher(cle,q,max){
 let refBox=null,refChamp=null,refRes=[];
 function refFermer(){if(refBox)refBox.remove();refBox=null;refChamp=null;refRes=[]}
 function refOuvrir(champ){
-  refRes=refChercher(champ.dataset.ref,champ.value,8);refChamp=champ;
+  refRes=refChercher(champ.dataset.ref,champ.value,40);refChamp=champ;
   if(!refRes.length){if(refBox)refBox.remove();refBox=null;return}
   if(!refBox){refBox=document.createElement('div');refBox.className='sugg';refBox.setAttribute('role','listbox');document.body.appendChild(refBox)}
   refBox.innerHTML=refRes.map((it,i)=>`<button type="button" data-sugg="${i}" role="option"><span>${esc(it.aff)}</span>${it.info?`<span class="sugg-i">${esc(it.info)}</span>`:''}</button>`).join('');
