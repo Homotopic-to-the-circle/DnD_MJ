@@ -43,7 +43,9 @@ AideDD ne compte pas certains dons. Corrige à la main, une fois par perso, en m
 | Avantage permanent à un jet de sauvegarde (**Gnome** : INT, SAG, CHA ; Sens du danger…) | Caracs | Bouton « av. » à côté du jet. |
 | Avantage sous condition (Nain contre le poison, Halfelin contre la peur, Elfe contre le charme…) | Traits | En note sur le trait : l'app ne gère pas les conditions. |
 | Résistances aux dégâts (Tieffelin, Drakéide, Nain, Aasimar…) | Traits | En note sur le trait : pas de case dans l'app. |
-| Bonus de classe non comptés (Touche-à-tout du Barde, Aura de protection du Paladin…) | Caracs | Vérifier chaque bonus ; noter ce qui manque. |
+| Touche-à-tout du Barde (niv. 2) | — | Ajouté par l'app (AideDD ne le compte pas). |
+| Jet de sauvegarde faux (Aura de protection du Paladin, objet magique…) | Caracs | Taper la bonne valeur à côté de « JS ». Champ vide = valeur calculée. |
+| Mental d'acier du Rôdeur Traqueur (niv. 7) | Caracs | Losange du jet de SAG (AideDD ne le compte pas). |
 | Sorts toujours préparés (domaine, serment, don, espèce) absents | Sorts | Les ajouter depuis la liste. |
 
 Les maîtrises de compétences restent manuelles exprès : une maîtrise ajoutée à tort serait pire qu'un clic.
