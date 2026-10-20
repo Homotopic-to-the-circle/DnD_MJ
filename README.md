@@ -18,7 +18,7 @@ Ce dépôt est généré à partir du même code que l'app des joueurs ; ne pas 
 
 # Aide-mémoire création de persos (version complète, MJ)
 
-Tout ce qui n'est pas automatique entre AideDD et la feuille de perso, à vérifier à chaque création et à chaque montée de niveau. La version courte pour les joueurs est dans le [README de l'app joueur](https://github.com/Homotopic-to-the-circle/DnD_Character#bon-à-savoir-à-lire-une-fois).
+Tout ce qui n'est pas automatique entre AideDD et la feuille de perso, à vérifier à chaque création et à chaque montée de niveau. La version courte pour les joueurs est dans le [README de l'app joueur](https://github.com/Homotopic-to-the-circle/DnD_Character#bon-à-savoir--la-liste-à-vérifier).
 
 ## Créer et importer
 
@@ -40,7 +40,11 @@ AideDD ne compte pas certains dons. Corrige à la main, une fois par perso, en m
 | **Expertise** non comptée | Caracs | Touche deux fois le losange (rien → maîtrise → expertise en double losange → rien). L'expertise déjà comptée par AideDD s'affiche d'office. |
 | Initiative, Vitesse, PV max qui ne collent pas (don Vigilant, Mobile, Robuste…) | Combat | Tape la bonne valeur. Champ vide = valeur d'AideDD. Le PV max sert aussi au Repos long. |
 | CA différente (bouclier, objet magique…) | Combat | Tape la bonne CA. Champ vide = valeur d'AideDD. |
-| Avantage à un jet de sauvegarde | Caracs | Bouton « av. » à côté du jet. |
+| Avantage permanent à un jet de sauvegarde (**Gnome** : INT, SAG, CHA ; Sens du danger…) | Caracs | Bouton « av. » à côté du jet. |
+| Avantage sous condition (Nain contre le poison, Halfelin contre la peur, Elfe contre le charme…) | Traits | En note sur le trait : l'app ne gère pas les conditions. |
+| Résistances aux dégâts (Tieffelin, Drakéide, Nain, Aasimar…) | Traits | En note sur le trait : pas de case dans l'app. |
+| Bonus de classe non comptés (Touche-à-tout du Barde, Aura de protection du Paladin…) | Caracs | Vérifier chaque bonus ; noter ce qui manque. |
+| Sorts toujours préparés (domaine, serment, don, espèce) absents | Sorts | Les ajouter depuis la liste. |
 
 Les maîtrises de compétences restent manuelles exprès : une maîtrise ajoutée à tort serait pire qu'un clic.
 
