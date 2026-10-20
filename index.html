@@ -135,6 +135,10 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .stat{text-align:center;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:2px;padding:6px 2px;min-width:0}
 .pvmax-in{width:3.2ch;font-size:inherit!important;padding:0!important;height:auto!important;border:none;border-bottom:1px solid var(--accent);border-radius:0;background:transparent;text-align:center;color:var(--muted)}
+.sugg{position:fixed;z-index:60;max-height:280px;overflow:auto;background:var(--card);border:1px solid var(--accent);border-radius:4px;box-shadow:0 4px 14px rgba(42,28,18,.3);display:flex;flex-direction:column}
+.sugg button{display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:9px 10px;font:inherit;font-size:1rem;color:var(--fg);height:auto;width:100%;flex:none}
+.sugg button:last-child{border-bottom:none}
+.sugg-i{font-size:.8rem;color:var(--muted);font-style:italic;white-space:nowrap}
 .stat-in{text-align:center;font-weight:700;font-size:1.2rem!important;padding:0!important;height:30px!important;margin:0 auto 2px;display:block;width:90%}
 .stat b{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums lining-nums;overflow-wrap:anywhere}
 .stat .lab{font-size:.72rem;letter-spacing:.01em}
@@ -339,7 +343,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='20.10.2026 à 02:56';
+const VERSION='20.10.2026 à 09:26';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['joueurs','Joueurs'],['objets','Objets'],['envois','Envois'],['rencontres','Rencontres'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -383,7 +387,7 @@ const quand=t=>{if(!t)return'jamais';const m=Math.round((Date.now()-Date.parse(t
 
 /* ---------- rendu ---------- */
 function render(){
-  rendu();renderDock();
+  rendu();renderDock();if(refChamp&&!document.body.contains(refChamp))refFermer();
 }
 function rendu(){
   const app=document.getElementById('app');
@@ -430,7 +434,7 @@ function formObjet(o,id){
       <input data-k="nom_cache" value="${v('nom_cache')}" placeholder="Nom visible (ex. Anneau d’argent gravé)">
       <textarea data-k="desc_cache" rows="2" placeholder="Description visible (facultatif)">${v('desc_cache')}</textarea>
       <div class="lab">Une fois révélé</div></div>`:''}
-    <input class="full" data-k="nom" value="${v('nom')}" placeholder="${o.cache?'Vrai nom (ex. Anneau de protection)':'Nom de l’objet'}">
+    <input class="full" data-k="nom" data-ref="objets" autocomplete="off" value="${v('nom')}" placeholder="${o.cache?'Vrai nom (ex. Anneau de protection)':'Nom de l’objet'}">
     <input data-k="qte" value="${v('qte')||1}" inputmode="numeric" placeholder="Qté" aria-label="Quantité">
     <input data-k="lien" value="${v('lien')}" placeholder="Lien (AideDD…) ou fichier joint" inputmode="url">
     <label class="full fichier"><input type="file" accept="image/*,application/pdf" data-fichier="${id}" hidden><span class="btn-like">${ui.envoiFichier===id?'Envoi du fichier…':'Joindre une image ou un PDF'}</span></label>
@@ -557,7 +561,7 @@ function ordre(s,avecJoueurs){
   return [...avec,...l.filter(x=>x.v==null)];
 }
 function formMonstre(s){
-  return `<div class="ajm" data-ajm="${esc(s.id)}"><input data-k="q" placeholder="Lien AideDD ou nom" inputmode="url" autocapitalize="sentences" aria-label="Lien AideDD ou nom du monstre">
+  return `<div class="ajm" data-ajm="${esc(s.id)}"><input data-k="q" data-ref="monstres" autocomplete="off" placeholder="Nom du monstre" autocapitalize="sentences" aria-label="Nom du monstre ou lien AideDD">
     <input data-k="pv" placeholder="PV" inputmode="numeric" aria-label="PV"><input data-k="ini" placeholder="Init." inputmode="numeric" aria-label="Initiative">
     <input class="full" data-k="note" placeholder="Note (ex. figurine à la hache)" aria-label="Note">
     <button class="full" data-a="ajoutM" data-s="${esc(s.id)}">Ajouter le monstre</button></div>
@@ -590,7 +594,8 @@ function rClic(a,b){
       const id=rid();renc.push({id,nom:n,monstres:[],init:{},combat:false});ui.ouvertes=Object.assign(ui.ouvertes||{},{[id]:true});rModifie();render();return true}
     case 'ajoutM':{const f=document.querySelector(`[data-ajm="${s.id}"]`),val=k=>f.querySelector(`[data-k="${k}"]`).value.trim();
       if(!val('q')){flash={err:1,t:'Colle le lien AideDD ou écris le nom du monstre.'};render();return true}
-      const {nom,url}=lireMonstre(val('q')),pv=vide(val('pv'))?'':Math.max(0,num(val('pv'))),id=rid();
+      const qi=f.querySelector('[data-k="q"]'),ex=refListe('monstres').find(it=>it.n===refN(val('q')));
+      const {nom,url}=qi.dataset.choisi&&qi.dataset.choisi===qi.value?{nom:qi.value,url:qi.dataset.url}:ex?{nom:ex.aff,url:ex.url}:lireMonstre(val('q')),pv=vide(val('pv'))?'':Math.max(0,num(val('pv'))),id=rid();
       s.monstres.push({id,nom,url,pvMax:pv,pv,note:val('note'),etats:{},conc:false});
       if(!vide(val('ini')))s.init['m:'+id]=num(val('ini'));
       rModifie();render();const q=document.querySelector(`[data-ajm="${s.id}"] [data-k="q"]`);if(q)q.focus();return true}
@@ -618,6 +623,12 @@ document.addEventListener('change',ev=>{
     else m[d.mf]=v;
     rModifie();render()}
 });
+/* choix dans les suggestions AideDD : objet → lien (sauf fichier joint) ; monstre → gardé jusqu'à « Ajouter » */
+function refChoisi(c,it){
+  const f=c.closest&&c.closest('[data-form]');if(!f||c.dataset.k!=='nom')return;
+  const l=f.querySelector('[data-k="lien"]');if(l&&!/supabase\.co/.test(l.value))l.value=it.url;
+  if(f.dataset.form==='nouveau')ui.brouillon=lireForm('nouveau');else c.dispatchEvent(new Event('change',{bubbles:true}));
+}
 /* − / + : on tape le nombre de PV retirés ou ajoutés, puis OK (ou Entrée) ; champ vide = annuler */
 function appliquerOp(i){
   const op=ui.hpOp;ui.hpOp=null;if(!op)return;const [si,mi]=i.dataset.op.split('|'),s=sec(si),m=s&&s.monstres.find(x=>x.id===mi);
@@ -680,7 +691,7 @@ document.addEventListener('click',async ev=>{
       return}
     case 'renommer':{const n=document.getElementById('cnom').value;await action('mj_campagne_renommer',{p_nom:n},'Nom enregistré.');return}
     case 'exporter':{try{const x=await rpc('mj_export',{p_code:code});telecharger(JSON.stringify(x,null,1),'export-'+(etat.campagne.nom||'campagne').replace(/[^\p{L}\p{N}]+/gu,'-')+'-'+new Date().toISOString().slice(0,10)+'.json');flash={t:'Export téléchargé.'}}catch(e){flash={err:1,t:erreur(e)}}render();return}
-    case 'majApp':{b.textContent='Mise à jour…';b.disabled=true;(self.caches?caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n)))):Promise.resolve()).catch(()=>{}).then(()=>Promise.all(['./','manifest.webmanifest'].map(u=>fetch(u,{cache:'reload'}).catch(()=>{})))).finally(()=>location.reload());return}
+    case 'majApp':{b.textContent='Mise à jour…';b.disabled=true;try{localStorage.removeItem('dnd55.ref')}catch(e){}(self.caches?caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n)))):Promise.resolve()).catch(()=>{}).then(()=>Promise.all(['./','manifest.webmanifest'].map(u=>fetch(u,{cache:'reload'}).catch(()=>{})))).finally(()=>location.reload());return}
     case 'sortir':ui.confSortir=true;render();return;
     case 'sortirOui':code='';charge=false;etat=null;ui.confSortir=false;try{localStorage.removeItem(KEY+'.code')}catch(e){}render();return;
   }
@@ -745,8 +756,97 @@ document.addEventListener('touchend',ev=>{
   }
 },{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code&&charge&&!ui.edit&&!ui.ajout)charger(true)});
+/* ---------- listes AideDD 5.5 : suggestions pendant la frappe ----------
+   Monstres, sorts, objets magiques et équipement, copiés une fois depuis AideDD sur le serveur.
+   L'app les télécharge au premier lancement (puis une fois par semaine) et les garde sur l'appareil :
+   les suggestions marchent ensuite hors ligne. On peut toujours écrire un nom libre. */
+const REF_K='dnd55.ref';
+let REF=null,REF_IDX={};
+try{REF=JSON.parse(localStorage.getItem(REF_K)||'null')}catch(e){}
+async function chargerRef(){
+  if(REF&&REF.recu&&Date.now()-REF.recu<7*864e5)return;
+  try{const r=await fetch(SUPA+'/rest/v1/rpc/ref_listes',{method:'POST',headers:{apikey:CLE_PUB,'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok)return;const j=await r.json();if(!j||!j.monstres)return;
+    j.recu=Date.now();REF=j;REF_IDX={};try{localStorage.setItem(REF_K,JSON.stringify(j))}catch(e){}}catch(e){}
+}
+const refN=s=>String(s||'').toLowerCase().replace(/['’]/g,'').replace(/œ/g,'oe').replace(/æ/g,'ae').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const refSlug=s=>refN(s).replace(/ /g,'-');
+const refFrag=s=>{const m=String(s).replace(/\(.*?\)/g,'').trim().split(/\s+/),k=m.findIndex(w=>/['’]/.test(w));return encodeURIComponent((k>0?m.slice(0,k):m).join(' ')).replace(/-/g,'%2D')};
+const ADR='https://www.aidedd.org/';
+/* chaque liste devient [{nom, aff, n, info, url, d}] ; « Amis|Faux amis » s'affiche « Amis / Faux amis » */
+function refListe(cle){
+  if(REF_IDX[cle])return REF_IDX[cle];if(!REF)return[];
+  const el=(nom,info,url,d)=>({nom,aff:String(nom).replace(/\|/g,' / '),n:refN(nom),info,url,d});
+  const eq=(k,page)=>(REF[k]||[]).map(x=>el(x[0],{armes:'Arme',armures:'Armure',outils:'Outil',materiel:'Équipement'}[k],ADR+'regles-24/equipement/'+page+'/#:~:text='+refFrag(x[0]),{k,x}));
+  let l=[];
+  if(cle==='monstres')l=(REF.monstres||[]).map(x=>el(x[0],'FP '+x[2],ADR+'monster/fr/'+x[1],{x}));
+  else if(cle==='sorts')l=(REF.sorts||[]).map(x=>el(x[0],x[2]?'niv. '+x[2]:'mineur',ADR+'spell/fr/'+x[1],{x}));
+  else if(cle==='armes')l=eq('armes','armes');
+  else if(cle==='objets')l=[...(REF.objets_magiques||[]).map(x=>el(x[0],x[3]||x[2],ADR+'magic-item/fr/'+x[1],{k:'magique',x})),
+    ...eq('armes','armes'),...eq('armures','armures'),...eq('outils','outils'),...eq('materiel','materiel-daventurier')];
+  return REF_IDX[cle]=l;
+}
+/* distance d'édition (fautes de frappe) */
+function refLev(a,b){if(a===b)return 0;let p=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[b.length]}
+/* chaque mot tapé doit se retrouver dans le nom : début de mot (le mieux), morceau de mot, ou à une ou deux fautes près */
+function refChercher(cle,q,max){
+  const t=refN(q);if(t.length<2)return[];const mots=t.split(' ');
+  const r=[];
+  for(const it of refListe(cle)){
+    const ws=it.n.split(' ');let s=it.n.startsWith(t)?-2:it.n===t?-3:0,ok=true;
+    for(const m of mots){
+      let b=9;
+      for(const w of ws){
+        if(w.startsWith(m)){b=0;break}
+        if(m.length>=3&&w.includes(m))b=Math.min(b,1);
+        else if(m.length>=4){const tol=m.length>=7?2:1,d=Math.min(refLev(m,w.slice(0,m.length)),refLev(m,w));if(d<=tol)b=Math.min(b,2+d)}
+      }
+      if(b===9){ok=false;break}s+=b;
+    }
+    if(ok)r.push([s,it]);
+  }
+  return r.sort((a,b)=>a[0]-b[0]||a[1].n.length-b[1].n.length||a[1].n.localeCompare(b[1].n)).slice(0,max||8).map(x=>x[1]);
+}
+/* liste déroulante sous le champ (data-ref="monstres|sorts|armes|objets") ; refChoisi(champ, élément) est défini par chaque app */
+let refBox=null,refChamp=null,refRes=[];
+function refFermer(){if(refBox)refBox.remove();refBox=null;refChamp=null;refRes=[]}
+function refOuvrir(champ){
+  refRes=refChercher(champ.dataset.ref,champ.value,8);refChamp=champ;
+  if(!refRes.length){if(refBox)refBox.remove();refBox=null;return}
+  if(!refBox){refBox=document.createElement('div');refBox.className='sugg';refBox.setAttribute('role','listbox');document.body.appendChild(refBox)}
+  refBox.innerHTML=refRes.map((it,i)=>`<button type="button" data-sugg="${i}" role="option"><span>${esc(it.aff)}</span>${it.info?`<span class="sugg-i">${esc(it.info)}</span>`:''}</button>`).join('');
+  refPlacer();
+}
+function refPlacer(){
+  if(!refBox||!refChamp)return;if(!document.body.contains(refChamp)){refFermer();return}
+  const r=refChamp.getBoundingClientRect(),w=Math.max(r.width,Math.min(300,innerWidth-16)),l=Math.max(8,Math.min(r.left,innerWidth-w-8));
+  refBox.style.left=l+'px';refBox.style.width=w+'px';
+  const vv=window.visualViewport,vb=vv?vv.offsetTop+vv.height:innerHeight;
+  refBox.style.maxHeight=Math.max(120,Math.min(280,Math.max(vb-r.bottom,r.top)-12))+'px';
+  const bas=vb-r.bottom,h=Math.min(refBox.scrollHeight,280);
+  if(bas<h+8&&r.top>bas){refBox.style.top='';refBox.style.bottom=(innerHeight-r.top+4)+'px'}else{refBox.style.bottom='';refBox.style.top=(r.bottom+4)+'px'}
+}
+document.addEventListener('input',ev=>{const c=ev.target;if(c.dataset&&c.dataset.ref){delete c.dataset.choisi;refOuvrir(c)}},true);
+document.addEventListener('focusin',ev=>{const c=ev.target;if(c.dataset&&c.dataset.ref&&c.value&&!c.dataset.choisi)refOuvrir(c)});
+document.addEventListener('focusout',ev=>{if(ev.target===refChamp)setTimeout(()=>{if(document.activeElement!==refChamp)refFermer()},200)});
+/* toucher une suggestion ne doit pas faire perdre le champ avant le choix */
+document.addEventListener('pointerdown',ev=>{if(ev.target.closest&&ev.target.closest('.sugg'))ev.preventDefault()},true);
+document.addEventListener('mousedown',ev=>{if(ev.target.closest&&ev.target.closest('.sugg'))ev.preventDefault()},true);
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('[data-sugg]');if(!b)return;ev.stopPropagation();
+  const it=refRes[+b.dataset.sugg],c=refChamp;refFermer();if(!it||!c)return;
+  c.value=it.nom.replace(/\|/g,' / ');c.dataset.choisi=c.value;c.dataset.url=it.url;
+  refChoisi(c,it);
+},true);
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')refFermer()});
+window.addEventListener('scroll',()=>refPlacer(),{passive:true});
+window.addEventListener('resize',()=>refPlacer());
+if(window.visualViewport){visualViewport.addEventListener('resize',()=>refPlacer());visualViewport.addEventListener('scroll',()=>refPlacer())}
 
-render();if(code)charger();
+
+
+render();if(code)charger();chargerRef();
 /* cache hors ligne, seulement sur le vrai site */
 if(location.hostname.endsWith('github.io')&&'serviceWorker' in navigator)try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 </script>
