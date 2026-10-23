@@ -139,7 +139,10 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .sugg button{display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:9px 10px;font:inherit;font-size:1rem;color:var(--fg);height:auto;width:100%;flex:none}
 .sugg button:last-child{border-bottom:none}
 .sugg-i{font-size:.8rem;color:var(--muted);font-style:italic;white-space:nowrap}
+.arme-mt{grid-column:1/-1;justify-self:start;border:none;background:transparent;padding:2px 0;height:auto;color:var(--fg)}
+.losange.on{background:var(--accent)}
 .vers-att{grid-column:1/-1;justify-self:start;height:28px;padding:0 10px;font-size:.88rem}
+.js-in{width:3.2ch;font-size:inherit!important;padding:0!important;height:auto!important;border:none;border-bottom:1px solid var(--accent);border-radius:0;background:transparent;text-align:center}
 .stat-in{text-align:center;font-weight:700;font-size:1.2rem!important;padding:0!important;height:30px!important;margin:0 auto 2px;display:block;width:90%}
 .stat b{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums lining-nums;overflow-wrap:anywhere}
 .stat .lab{font-size:.72rem;letter-spacing:.01em}
@@ -178,6 +181,8 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .car .s{font-size:.85rem;margin-top:2px}
 .dot{display:inline-block;width:.55em;height:.55em;border:1.5px solid var(--accent);margin-right:7px;vertical-align:.08em;transform:rotate(45deg)}
 .dot.on{background:var(--accent)}
+/* expertise : un losange dans le losange */
+.dot.exp{background:var(--accent);box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px var(--accent)}
 /* le losange tourné déborde d'environ 3 px : on le décale pour qu'il s'aligne sur le début des filets */
 .skill .dot{margin-left:3px}
 .dot-btn{padding:0!important;height:.55em!important;width:.55em;min-width:0;border-radius:0;background:transparent;cursor:pointer}.dot-btn.on{background:var(--accent)}
@@ -334,6 +339,16 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .ajm{display:grid;grid-template-columns:1fr 4rem 4rem;gap:6px}
 .ajm input{height:34px;padding:0 8px;box-sizing:border-box;width:100%}
 .ajm .full{grid-column:1/-1}
+.ar{padding:8px 0;border-bottom:1px solid var(--line)}
+.ar:not(:has(~ .ar)){border-bottom:none}
+.ar .l1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ar .nom{font-weight:700}
+.ar .d{font-size:.92rem;font-style:italic;color:var(--muted)}
+.ar-ed{display:grid;grid-template-columns:1fr 32px;gap:6px}
+.ar-ed input{height:34px;padding:0 8px;box-sizing:border-box;width:100%}
+.ar-ed .full{grid-column:1/-1}
+.fichier-btn{cursor:pointer;flex:none;white-space:nowrap;color:var(--accent);border:1px solid var(--accent);border-radius:4px;box-sizing:border-box}
+.fichier-btn.pri{background:var(--accent);color:var(--on-accent)}
 .combat-pied{display:flex;justify-content:flex-end;margin-top:2px}
 </style>
 </head>
@@ -344,15 +359,16 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='20.10.2026 à 09:57';
+const VERSION='23.10.2026 à 10:42';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
-const ONGLETS=[['joueurs','Joueurs'],['objets','Objets'],['envois','Envois'],['rencontres','Rencontres'],['campagne','Campagne']];
+const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{const n=parseInt(v,10);return isNaN(n)?0:n};
 const jolieCle=c=>String(c||'').replace(/(.{4})(?=.)/g,'$1-');
 let code='';try{code=localStorage.getItem(KEY+'.code')||''}catch(e){}
-let ui={onglet:'joueurs',edit:false,envoi:null,choix:{},ajout:false,init:false,confRetirer:null,confSortir:false};
-try{const o=localStorage.getItem(KEY+'.onglet');if(o)ui.onglet=o}catch(e){}
+let ui={onglet:'rencontres',edit:false,envoi:null,choix:{},ajout:false,init:false,confRetirer:null,confSortir:false};
+try{const o=localStorage.getItem(KEY+'.onglet');if(o)ui.onglet=o==='joueurs'?'campagne':o}catch(e){}
+if(!ONGLETS.some(o=>o[0]===ui.onglet))ui.onglet='rencontres';
 let etat=null,flash=null,charge=false,nouveauCode=null,anim='';
 
 async function rpc(fn,args){
@@ -364,7 +380,7 @@ async function rpc(fn,args){
 const MSG={code_mj_invalide:'Code MJ refusé.',init_invalide:'Code d’initialisation refusé (ou déjà utilisé).',code_trop_court:'Le code MJ doit faire au moins 8 caractères.',nom_manquant:'Indique un nom.',objet_inconnu:'Objet introuvable.'};
 function erreur(e){return e&&e.serveur?(MSG[e.message]||'Erreur du serveur : '+e.message):'Pas de connexion. Réessaie.'}
 async function charger(silence){
-  try{etat=await rpc('mj_etat',{p_code:code});charge=true;await chargerRenc()}
+  try{etat=await rpc('mj_etat',{p_code:code});charge=true;await chargerRenc();if(!archCharge)await chargerArch()}
   catch(e){if(e.serveur&&e.message==='code_mj_invalide'){code='';try{localStorage.removeItem(KEY+'.code')}catch(_){}}if(!silence)flash={err:1,t:erreur(e)}}
   render();
 }
@@ -395,7 +411,7 @@ function rendu(){
   if(!code){app.innerHTML=vueConnexion();return}
   if(!charge){app.innerHTML=`<h1>MJ</h1><p class="muted">Chargement…</p>`;return}
   const tabs=ONGLETS.map(([k,l])=>`<button data-a="onglet" data-o="${k}" aria-current="${ui.onglet===k}">${l}</button>`).join('');
-  const corps={joueurs:ongJoueurs,objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,campagne:ongCampagne}[ui.onglet]||ongJoueurs;
+  const corps={objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,archives:ongArchives,campagne:ongCampagne}[ui.onglet]||ongRencontres;
   app.innerHTML=`<header class="top"><div class="row"><div class="titre"><h1>${esc(etat.campagne.nom)}</h1></div>
     <button data-a="edit" class="icone ${ui.edit?'on':''}" aria-pressed="${ui.edit}" aria-label="${ui.edit?'Terminer':'Modifier'}">${ui.edit
       ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
@@ -474,13 +490,63 @@ function ongEnvois(){
     <p class="muted">« En attente » : le joueur n’a pas encore ouvert son app. L’objet arrivera dès qu’il l’ouvre.</p></section>`;
 }
 function ongCampagne(){
-  return `<section><h2>Campagne</h2>${ui.edit?`<label class="lab">Nom<input id="cnom" value="${esc(etat.campagne.nom)}"></label><button data-a="renommer">Enregistrer le nom</button>`
+  return `${ongJoueurs()}<section><h2>Campagne</h2>${ui.edit?`<label class="lab">Nom<input id="cnom" value="${esc(etat.campagne.nom)}"></label><button data-a="renommer">Enregistrer le nom</button>`
       :`<div><b>${esc(etat.campagne.nom)}</b> · ${etat.joueurs.length} joueur(s) · ${etat.objets.length} objet(s)</div>`}</section>
-    <section><h2>Export complet</h2><p class="muted">Toutes les fiches, le catalogue, les envois et les rencontres dans un seul fichier. À ranger sur ton kDrive de temps en temps.</p>
+    <section><h2>Export complet</h2><p class="muted">Toutes les fiches, le catalogue, les envois, les rencontres et la liste des archives dans un seul fichier. À ranger sur ton kDrive de temps en temps.</p>
       <button data-a="exporter">Télécharger l’export</button></section>
     <section><h2>Cet appareil</h2><p class="muted">Version du ${esc(VERSION)}.</p><button data-a="majApp">Mettre à jour l’application</button>${ui.confSortir?`<p>Oublier le code MJ sur cet appareil ?</p><div class="row"><button class="dgr" data-a="sortirOui">Oui, se déconnecter</button><button data-a="confNon">Annuler</button></div>`
       :`<button data-a="sortir">Se déconnecter</button>`}</section>`;
 }
+
+/* ---------- archives : documents du MJ (lore, PNJ, langues…), un PDF ou une image chacun ----------
+   Remplacer le fichier supprime l'ancienne version du stockage (sauf si un objet ou un envoi s'en sert encore). */
+let arch=[],archCharge=false;
+async function chargerArch(){try{const r=await rpc('mj_archives',{p_code:code});arch=Array.isArray(r)?r:[];archCharge=true}catch(e){}}
+async function sauverArch(){try{await rpc('mj_archives_sauver',{p_code:code,p_doc:arch});return true}catch(e){flash={err:1,t:'Archives non enregistrées : '+erreur(e)};render();return false}}
+const dateCourte=t=>t?new Date(t).toLocaleDateString('fr-CH'):'';
+function ongArchives(){
+  if(!archCharge)return `<section><h2>Archives</h2><p class="muted">Archives pas encore chargées (pas de connexion ?).</p><button data-a="archRecharger">Réessayer</button></section>`;
+  const env=id=>ui.archEnvoi===id;
+  const ligne=a=>ui.edit
+    ?`<div class="ar ar-ed"><input data-atitre="${esc(a.id)}" value="${esc(a.titre)}" aria-label="Titre"><button class="x" data-a="archSuppr" data-id="${esc(a.id)}" aria-label="Supprimer ${esc(a.titre)}">✕</button>
+        <input class="full" data-anote="${esc(a.id)}" value="${esc(a.note||'')}" placeholder="Note (facultatif)" aria-label="Note">
+        ${ui.confRetirer===a.id?`<div class="full row" style="justify-content:end"><button class="dgr btn-s" data-a="archSupprOui" data-id="${esc(a.id)}">Supprimer le document et son fichier ?</button><button class="btn-s" data-a="confNon">Annuler</button></div>`:''}</div>`
+    :`<div class="ar"><div class="l1"><span>${a.url?`<a class="ext nom" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.titre)}</a>`:`<span class="nom">${esc(a.titre)}</span>`}</span>
+        <label class="btn-s fichier-btn">${env(a.id)?'Envoi…':'Remplacer'}<input type="file" accept="application/pdf,image/*" data-arch="${esc(a.id)}" hidden ${env(a.id)?'disabled':''}></label></div>
+        <div class="muted">${[a.type==='application/pdf'?'PDF':a.type?'Image':'',a.taille?ko(a.taille):'',a.maj?'mis à jour le '+dateCourte(a.maj):''].filter(Boolean).join(' · ')}</div>
+        ${a.note?`<div class="d">${esc(a.note)}</div>`:''}</div>`;
+  return `<section><h2>Archives</h2>${arch.length?arch.map(ligne).join(''):'<p class="muted">Aucun document. Ajoute tes PDF de lore, de PNJ, de langues… ci-dessous.</p>'}
+      ${arch.length&&!ui.edit?'<p class="muted">« Remplacer » met en ligne la nouvelle version et supprime l’ancienne.</p>':''}</section>
+    <section><h2>Nouveau document</h2><div class="row code-row"><input id="atitre" placeholder="Titre (ex. PNJ de Wyrmbois)">
+      <label class="btn-s fichier-btn pri">${env('nouveau')?'Envoi…':'Choisir le fichier'}<input type="file" accept="application/pdf,image/*" data-arch="nouveau" hidden ${env('nouveau')?'disabled':''}></label></div>
+      <p class="muted">PDF ou image, 15 Mo au plus.</p></section>`;
+}
+async function televerserFichier(f,ancien){
+  const h={apikey:CLE_PUB,'Content-Type':f.type||'application/octet-stream','x-mj-code':encodeURIComponent(code),'x-nom':encodeURIComponent(f.name)};
+  if(ancien)h['x-remplace']=encodeURIComponent(ancien);
+  const r=await fetch(SUPA+'/functions/v1/televerser',{method:'POST',headers:h,body:f});
+  const t=await r.json().catch(()=>({}));if(!r.ok)throw new Error(t.message||'erreur');return t;
+}
+async function joindreArch(input){
+  const f0=input.files&&input.files[0],id=input.dataset.arch;if(!f0)return;
+  let a=id==='nouveau'?null:arch.find(x=>x.id===id);if(id!=='nouveau'&&!a)return;
+  const titre=id==='nouveau'?((document.getElementById('atitre')||{}).value||'').trim()||f0.name.replace(/\.[^.]+$/,''):'';
+  ui.archEnvoi=id;render();
+  try{
+    const f=await compresser(f0);if(f.size>15*1048576)throw new Error('trop_lourd');
+    const t=await televerserFichier(f,a&&a.url);
+    const maj={url:t.url,type:f.type,taille:t.taille,nomFichier:f.name,maj:new Date().toISOString()};
+    if(a)Object.assign(a,maj);else{a=Object.assign({id:Math.random().toString(36).slice(2,10),titre,note:''},maj);arch.unshift(a)}
+    if(await sauverArch())flash={t:id==='nouveau'?'« '+a.titre+' » ajouté aux archives ('+ko(t.taille)+').':'« '+a.titre+' » remplacé'+(t.ancien==='supprime'?', ancienne version supprimée':'')+'.'};
+  }catch(e){const m=String(e.message||e);flash={err:1,t:m==='trop_lourd'?'Fichier trop lourd (15 Mo maximum).':m==='type_refuse'?'Seuls les images et les PDF sont acceptés.':m==='code_mj_invalide'?'Code MJ refusé.':'Envoi du fichier impossible ('+m+').'}}
+  ui.archEnvoi=null;render();
+}
+document.addEventListener('change',ev=>{if(ev.target.dataset&&ev.target.dataset.arch)joindreArch(ev.target)},true);
+document.addEventListener('change',async ev=>{
+  const d=ev.target.dataset||{},k=d.atitre||d.anote;if(!k)return;const a=arch.find(x=>x.id===k);if(!a)return;
+  const v=ev.target.value.trim();if(d.atitre){if(!v)return;a.titre=v}else a.note=v;
+  if(await sauverArch())flash={t:'Enregistré.'},renderDock();
+});
 
 /* ---------- rencontres ----------
    Un seul document par campagne (sections, monstres, PV, initiatives), gardé aussi sur l'appareil :
@@ -587,6 +653,10 @@ function ongRencontres(){
 }
 function rClic(a,b){
   if(a==='rRecharger'){chargerRenc().then(render);return true}
+  if(a==='archRecharger'){chargerArch().then(render);return true}
+  if(a==='archSuppr'){ui.confRetirer=b.dataset.id;render();return true}
+  if(a==='archSupprOui'){const x=arch.find(y=>y.id===b.dataset.id);ui.confRetirer=null;if(!x)return true;
+    arch=arch.filter(y=>y!==x);sauverArch().then(ok=>{if(ok&&x.url)fetch(SUPA+'/functions/v1/televerser',{method:'POST',headers:{apikey:CLE_PUB,'x-mj-code':encodeURIComponent(code),'x-action':'supprimer','x-remplace':encodeURIComponent(x.url)}}).catch(()=>{});flash={t:'« '+x.titre+' » supprimé.'};render()});return true}
   if(!rencCharge)return false;
   const s=b.dataset.s?sec(b.dataset.s):null,m=s&&b.dataset.m?s.monstres.find(x=>x.id===b.dataset.m):null;
   switch(a){
@@ -661,7 +731,7 @@ document.addEventListener('click',async ev=>{
     case 'initOui':ui.init=true;render();return;
     case 'initNon':ui.init=false;render();return;
     case 'entrer':{const c=document.getElementById('code').value;if(!c)return;code=c;
-      try{etat=await rpc('mj_etat',{p_code:code});charge=true;try{localStorage.setItem(KEY+'.code',code)}catch(e){}await chargerRenc()}
+      try{etat=await rpc('mj_etat',{p_code:code});charge=true;try{localStorage.setItem(KEY+'.code',code)}catch(e){}await chargerRenc();await chargerArch()}
       catch(e){code='';flash={err:1,t:erreur(e)}}render();return}
     case 'initialiser':{const i=document.getElementById('init').value,c1=document.getElementById('nc1').value,c2=document.getElementById('nc2').value;
       if(c1!==c2){flash={err:1,t:'Les deux codes MJ ne sont pas identiques.'};render();return}
