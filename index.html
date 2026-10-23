@@ -359,7 +359,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='23.10.2026 à 10:42';
+const VERSION='23.10.2026 à 10:58';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -512,14 +512,14 @@ function ongArchives(){
         <input class="full" data-anote="${esc(a.id)}" value="${esc(a.note||'')}" placeholder="Note (facultatif)" aria-label="Note">
         ${ui.confRetirer===a.id?`<div class="full row" style="justify-content:end"><button class="dgr btn-s" data-a="archSupprOui" data-id="${esc(a.id)}">Supprimer le document et son fichier ?</button><button class="btn-s" data-a="confNon">Annuler</button></div>`:''}</div>`
     :`<div class="ar"><div class="l1"><span>${a.url?`<a class="ext nom" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.titre)}</a>`:`<span class="nom">${esc(a.titre)}</span>`}</span>
-        <label class="btn-s fichier-btn">${env(a.id)?'Envoi…':'Remplacer'}<input type="file" accept="application/pdf,image/*" data-arch="${esc(a.id)}" hidden ${env(a.id)?'disabled':''}></label></div>
+        <label class="btn-s fichier-btn">${env(a.id)?'Envoi…':'Remplacer'}<input type="file" accept="application/pdf,.pdf" data-arch="${esc(a.id)}" hidden ${env(a.id)?'disabled':''}></label></div>
         <div class="muted">${[a.type==='application/pdf'?'PDF':a.type?'Image':'',a.taille?ko(a.taille):'',a.maj?'mis à jour le '+dateCourte(a.maj):''].filter(Boolean).join(' · ')}</div>
         ${a.note?`<div class="d">${esc(a.note)}</div>`:''}</div>`;
   return `<section><h2>Archives</h2>${arch.length?arch.map(ligne).join(''):'<p class="muted">Aucun document. Ajoute tes PDF de lore, de PNJ, de langues… ci-dessous.</p>'}
       ${arch.length&&!ui.edit?'<p class="muted">« Remplacer » met en ligne la nouvelle version et supprime l’ancienne.</p>':''}</section>
-    <section><h2>Nouveau document</h2><div class="row code-row"><input id="atitre" placeholder="Titre (ex. PNJ de Wyrmbois)">
-      <label class="btn-s fichier-btn pri">${env('nouveau')?'Envoi…':'Choisir le fichier'}<input type="file" accept="application/pdf,image/*" data-arch="nouveau" hidden ${env('nouveau')?'disabled':''}></label></div>
-      <p class="muted">PDF ou image, 15 Mo au plus.</p></section>`;
+    <section><h2>Nouveau document</h2><div class="row code-row"><input id="atitre" value="${esc(ui.archTitre||'')}" placeholder="Titre (ex. PNJ de Wyrmbois)">
+      <label class="btn-s fichier-btn pri">${env('nouveau')?'Envoi…':'Choisir le fichier'}<input type="file" accept="application/pdf,.pdf" data-arch="nouveau" hidden ${env('nouveau')?'disabled':''}></label></div>
+      <p class="muted">PDF, 15 Mo au plus.</p></section>`;
 }
 async function televerserFichier(f,ancien){
   const h={apikey:CLE_PUB,'Content-Type':f.type||'application/octet-stream','x-mj-code':encodeURIComponent(code),'x-nom':encodeURIComponent(f.name)};
@@ -528,20 +528,22 @@ async function televerserFichier(f,ancien){
   const t=await r.json().catch(()=>({}));if(!r.ok)throw new Error(t.message||'erreur');return t;
 }
 async function joindreArch(input){
-  const f0=input.files&&input.files[0],id=input.dataset.arch;if(!f0)return;
+  const f0=input.files&&input.files[0],id=input.dataset.arch;if(!f0||input._pris)return;input._pris=true;
   let a=id==='nouveau'?null:arch.find(x=>x.id===id);if(id!=='nouveau'&&!a)return;
-  const titre=id==='nouveau'?((document.getElementById('atitre')||{}).value||'').trim()||f0.name.replace(/\.[^.]+$/,''):'';
+  const titre=id==='nouveau'?(ui.archTitre||((document.getElementById('atitre')||{}).value)||'').trim()||f0.name.replace(/\.[^.]+$/,''):'';
   ui.archEnvoi=id;render();
   try{
     const f=await compresser(f0);if(f.size>15*1048576)throw new Error('trop_lourd');
     const t=await televerserFichier(f,a&&a.url);
     const maj={url:t.url,type:f.type,taille:t.taille,nomFichier:f.name,maj:new Date().toISOString()};
-    if(a)Object.assign(a,maj);else{a=Object.assign({id:Math.random().toString(36).slice(2,10),titre,note:''},maj);arch.unshift(a)}
+    if(a)Object.assign(a,maj);else{a=Object.assign({id:Math.random().toString(36).slice(2,10),titre,note:''},maj);arch.unshift(a);ui.archTitre='';try{localStorage.removeItem(KEY+'.archTitre')}catch(e){}}
     if(await sauverArch())flash={t:id==='nouveau'?'« '+a.titre+' » ajouté aux archives ('+ko(t.taille)+').':'« '+a.titre+' » remplacé'+(t.ancien==='supprime'?', ancienne version supprimée':'')+'.'};
   }catch(e){const m=String(e.message||e);flash={err:1,t:m==='trop_lourd'?'Fichier trop lourd (15 Mo maximum).':m==='type_refuse'?'Seuls les images et les PDF sont acceptés.':m==='code_mj_invalide'?'Code MJ refusé.':'Envoi du fichier impossible ('+m+').'}}
   ui.archEnvoi=null;render();
 }
 document.addEventListener('change',ev=>{if(ev.target.dataset&&ev.target.dataset.arch)joindreArch(ev.target)},true);
+document.addEventListener('input',ev=>{if(ev.target.id==='atitre'){ui.archTitre=ev.target.value;try{localStorage.setItem(KEY+'.archTitre',ui.archTitre)}catch(e){}}});
+try{ui.archTitre=localStorage.getItem(KEY+'.archTitre')||''}catch(e){}
 document.addEventListener('change',async ev=>{
   const d=ev.target.dataset||{},k=d.atitre||d.anote;if(!k)return;const a=arch.find(x=>x.id===k);if(!a)return;
   const v=ev.target.value.trim();if(d.atitre){if(!v)return;a.titre=v}else a.note=v;
@@ -780,7 +782,7 @@ async function compresser(f){
 }
 const ko=n=>n<1048576?Math.round(n/1024)+' Ko':(n/1048576).toFixed(1).replace('.',',')+' Mo';
 async function joindre(input){
-  const f0=input.files&&input.files[0],id=input.dataset.fichier;if(!f0)return;
+  const f0=input.files&&input.files[0],id=input.dataset.fichier;if(!f0||input._pris)return;input._pris=true;
   if(id==='nouveau'){const o=lireForm('nouveau');ui.brouillon=o}
   ui.envoiFichier=id;render();
   try{
@@ -812,7 +814,14 @@ document.addEventListener('change',async ev=>{
 });
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='code'){const b=document.querySelector('[data-a=entrer]');if(b)b.click()}});
 /* rafraîchit les « reçu / en attente » et les PV sans déranger une saisie */
-setInterval(()=>{if(!code||!charge||ui.edit||ui.ajout||ui.envoi||document.visibilityState==='hidden')return;const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;charger(true)},20000);
+/* sélecteur de fichier ouvert : le téléphone met l'app en arrière-plan ; au retour, ne rien redessiner avant d'avoir reçu le fichier */
+let choixFichier=0;const choixEnCours=()=>Date.now()-choixFichier<180000;
+document.addEventListener('click',ev=>{const l=ev.target.closest&&ev.target.closest('input[type=file],label.fichier,label.fichier-btn');if(!l)return;choixFichier=Date.now();
+  /* si l'écran a été redessiné entre-temps, le champ n'est plus dans la page : il reçoit quand même le fichier */
+  const i=l.matches('input')?l:l.querySelector('input[type=file]');if(i)i.onchange=()=>{choixFichier=0;if(i.dataset.arch)joindreArch(i);else if(i.dataset.fichier)joindre(i)}},true);
+document.addEventListener('change',ev=>{if(ev.target.type==='file')choixFichier=0},true);
+document.addEventListener('cancel',ev=>{if(ev.target.type==='file')choixFichier=0},true);
+setInterval(()=>{if(!code||!charge||ui.edit||ui.ajout||ui.envoi||choixEnCours()||document.visibilityState==='hidden')return;const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;charger(true)},20000);
 /* glisser à gauche / droite pour changer d'onglet, en boucle (comme l'app joueur) */
 let tx=null,ty=null;
 document.addEventListener('touchstart',ev=>{
@@ -827,7 +836,7 @@ document.addEventListener('touchend',ev=>{
     try{localStorage.setItem(KEY+'.onglet',ui.onglet)}catch(e){}render();window.scrollTo(0,0);
   }
 },{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code&&charge&&!ui.edit&&!ui.ajout)charger(true)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code&&charge&&!ui.edit&&!ui.ajout&&!choixEnCours())charger(true)});
 /* ---------- listes AideDD 5.5 : suggestions pendant la frappe ----------
    Monstres, sorts, objets magiques et équipement, copiés une fois depuis AideDD sur le serveur.
    L'app les télécharge au premier lancement (puis une fois par semaine) et les garde sur l'appareil :
