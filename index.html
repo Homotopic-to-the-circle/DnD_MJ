@@ -349,6 +349,8 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .ar-ed .full{grid-column:1/-1}
 .fichier-btn{cursor:pointer;flex:none;white-space:nowrap;color:var(--accent);border:1px solid var(--accent);border-radius:4px;box-sizing:border-box}
 .fichier-btn.pri{background:var(--accent);color:var(--on-accent)}
+.l2{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.or{color:var(--accent);font-weight:700;white-space:nowrap;flex:none}
 .combat-pied{display:flex;justify-content:flex-end;margin-top:2px}
 </style>
 </head>
@@ -359,7 +361,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='23.10.2026 à 10:58';
+const VERSION='06.11.2026 à 01:55';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -430,13 +432,17 @@ function vueConnexion(){
   :`<section><h2>Connexion</h2><div class="row code-row"><input id="code" type="password" placeholder="Code MJ" autocomplete="current-password"><button class="pri" data-a="entrer">Entrer</button></div>
       <p class="muted">Le code reste enregistré sur cet appareil.</p><button data-a="initOui">Première fois ? Code d’initialisation</button></section>`}`;
 }
+/* tout l'argent du joueur converti en pièces d'or : 1 pp = 10 po, 1 pe = ½ po, 1 pa = 1/10 po, 1 pc = 1/100 po */
+function orJ(j){const p=j.pieces;if(!p)return null;
+  const t=num(p.pc)/100+num(p.pa)/10+num(p.pe)/2+num(p.po)+num(p.pp)*10;
+  return (Math.round(t*100)/100).toLocaleString('fr-CH',{maximumFractionDigits:2})}
 function ongJoueurs(){
   const js=etat.joueurs;
   const ligne=j=>ui.edit
     ?`<div class="jr"><div class="row code-row"><input data-jnom="${esc(j.id)}" value="${esc(j.nom)}" aria-label="Nom du joueur">${ui.confRetirer===j.id
         ?`<button class="dgr" data-a="retirerJOui" data-id="${esc(j.id)}">Retirer ?</button>`:`<button class="x" data-a="retirerJ" data-id="${esc(j.id)}" aria-label="Retirer ${esc(j.nom)}">✕</button>`}</div></div>`
     :`<div class="jr"><div class="l1"><b>${esc(j.nom)}</b><span class="muted">vu ${esc(quand(j.vu_le))}</span></div>
-      <div>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(pvMaxJ(j))}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</div>
+      <div class="l2"><span>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(pvMaxJ(j))}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</span>${j.classe&&orJ(j)!=null?`<b class="or" title="Tout son argent converti en pièces d’or">${esc(orJ(j))} po</b>`:''}</div>
       ${j.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(j.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(j.cle))}">Copier</button></div>`:''}
       ${nouveauCode===j.id?'<p class="muted">Envoie ce code au joueur : il l’entre dans son app, onglet Fiche, « Sauvegarde en ligne ».</p>':''}</div>`;
   return `<section><h2>Joueurs</h2>${js.length?js.map(ligne).join(''):'<p class="muted">Aucun joueur. Ajoute-les ci-dessous.</p>'}</section>
