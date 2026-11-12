@@ -397,7 +397,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='13.11.2026 à 04:49';
+const VERSION='13.11.2026 à 05:00';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -443,6 +443,10 @@ function msgHtml(){if(!flash)return'';const h=`<div class="msg ${flash.err?'err'
 const quand=t=>{if(!t)return'jamais';const m=Math.round((Date.now()-Date.parse(t))/60000);return m<1?'à l’instant':m<60?'il y a '+m+' min':m<1440?'il y a '+Math.round(m/60)+' h':new Date(t).toLocaleDateString('fr-CH')};
 
 /* ---------- rendu ---------- */
+/* ordinateur tactile (Linux/KDE + Firefox) : le clavier virtuel « chiffres » s'ouvre puis se referme aussitôt.
+   Hors téléphone/tablette, on garde le clavier normal (il a aussi les chiffres). */
+const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function clavierOrdi(){if(!MOBILE)document.querySelectorAll('[inputmode="numeric"]').forEach(i=>i.removeAttribute('inputmode'))}
 function render(){
   rendu();renderDock();if(refChamp&&!document.body.contains(refChamp))refFermer();
 }
@@ -460,6 +464,7 @@ function rendu(){
       :'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>'}</button></div>
     ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main class="${anim}"><nav class="tabs">${tabs}</nav>${corps()}</main><aside class="pnj-col" aria-label="PNJ">${ongPnj()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
   anim='';{const pc2=document.querySelector('.pnj-col');if(pc2)pc2.scrollTop=pcHaut}
+  clavierOrdi();
   if(grand()){const t=document.querySelector('.top');if(t)document.documentElement.style.setProperty('--haut-top',(t.offsetHeight+12)+'px')}
 }
 /* ordinateur : la table des joueurs (PV, états, or) reste visible à droite, mise à jour en direct */
