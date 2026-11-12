@@ -10,6 +10,10 @@ App des joueurs : https://homotopic-to-the-circle.github.io/DnD_Character/
 
 Ouvre l'adresse dans Chrome (Android) → menu ⋮ → **Installer l'application**. Le code MJ est demandé au premier lancement.
 
+Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dans la barre d'adresse. Sur grand écran, la colonne **À la table** (PV, états, concentration, or de chaque joueur) reste visible à droite et se met à jour toute seule.
+
+Codes joueurs : onglet **Campagne** → Joueurs, bouton **Copier** à côté de chaque code. Le joueur l'entre sur l'écran d'accueil de son app (**Retrouver un personnage**) pour récupérer sa fiche sur n'importe quel appareil. Un code par personnage : ajoute un « joueur » de plus pour un 2e personnage.
+
 Pour récupérer une nouvelle version : onglet **Campagne** → **Mettre à jour l'application**.
 
 Ce dépôt est généré à partir du même code que l'app des joueurs ; ne pas le modifier à la main.
