@@ -265,6 +265,13 @@ a.ext{text-decoration:none;color:inherit}
 </style>
 <style>
 .grand .wrap{max-width:1640px}
+.numpad{position:fixed;z-index:70;width:232px;background:var(--card);border:1px solid var(--accent);border-radius:6px;box-shadow:0 6px 20px rgba(42,28,18,.35);padding:10px;display:flex;flex-direction:column;gap:8px;touch-action:manipulation}
+.np-t{font-size:.9rem;color:var(--muted);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-v{font-family:var(--disp);font-size:2rem;text-align:center;color:var(--accent);border-bottom:1px solid var(--line);min-height:1.4em;line-height:1.4em}
+.np-v.vieux{color:var(--muted);opacity:.6}
+.np-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.np-g button{height:52px;font-size:1.35rem;padding:0;-webkit-user-select:none;user-select:none}
+.np-ok{height:48px;font-size:1.1rem}
 .mj-bureau{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 270px;gap:28px;align-items:start}
 .pnj-col{position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 16px);overflow:auto;display:flex;flex-direction:column;gap:14px;padding:3px 6px 0 3px}
 .pnj-tete{display:flex;gap:10px;align-items:center;border-bottom:2px solid var(--accent);padding-bottom:6px}.pnj-tete h2{margin:0;flex:1;border:none;padding:0}.pnj-tete input{flex:1;min-width:0;height:34px;padding:0 8px}
@@ -397,7 +404,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='13.11.2026 à 05:00';
+const VERSION='13.11.2026 à 05:06';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -553,6 +560,59 @@ document.addEventListener('change',ev=>{const d=ev.target.dataset||{};
   const v=d.pk==='fiche'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();if(d.pk==='nom'&&!v)return;
   p[d.pk]=v;pnjSauver();if(d.pk==='region')render();
 });
+/* ---------- pavé numérique (ordinateur tactile) ----------
+   Au doigt sur grand écran, l'initiative, les PV et le −/+ des monstres ouvrent ce pavé au lieu du clavier du système.
+   À la souris, on tape au clavier comme avant ; sur téléphone, rien ne change. */
+let pad=null,padBox=null,pointeur='mouse';
+document.addEventListener('pointerdown',ev=>{pointeur=ev.pointerType||'mouse'},true);
+const padTactile=()=>grand()&&pointeur==='touch';
+function padFermer(){if(padBox)padBox.remove();padBox=null;const a=pad&&pad.ancre;pad=null;if(a)setTimeout(()=>{a.readOnly=false},400)}
+function padOuvrir(o,ancre){
+  const s=sec(o.s);if(!s)return;
+  const m=o.m?s.monstres.find(x=>x.id===o.m):null,j=o.k&&o.k.startsWith('j:')?live.find(x=>'j:'+x.id===o.k):null;
+  const qui=m?m.nom:j?(j.perso||j.nom):(s.monstres.find(x=>'m:'+x.id===o.k)||{}).nom||'';
+  o.titre=(o.t==='ini'?'Initiative':o.t==='pv'?'PV':o.d<0?'Dégâts':'Soins')+(qui?' · '+qui:'');
+  o.vieux=o.t==='ini'?String(s.init[o.k]??''):o.t==='pv'?String(m&&m.pv!=null?m.pv:''):'';o.val='';
+  o.ancre=ancre.tagName==='INPUT'?ancre:null;pad=o;if(!padBox){padBox=document.createElement('div');padBox.className='numpad';padBox.setAttribute('role','dialog');document.body.appendChild(padBox)}
+  padDessiner();
+  const r=ancre.getBoundingClientRect(),w=232,h=padBox.offsetHeight;
+  let l=Math.min(Math.max(8,r.left),innerWidth-w-8),t=r.bottom+6;if(t+h>innerHeight-8)t=Math.max(8,r.top-h-6);
+  padBox.style.left=l+'px';padBox.style.top=t+'px';
+}
+function padDessiner(){
+  if(!pad||!padBox)return;const v=pad.val!==''?pad.val:pad.vieux,sig=pad.t==='op'?(pad.d<0?'−':'+'):'';
+  const k=n=>`<button type="button" data-np="${n}">${n}</button>`;
+  padBox.innerHTML=`<div class="np-t">${esc(pad.titre)}</div><div class="np-v${pad.val===''&&pad.vieux!==''?' vieux':''}">${sig}${esc(v)||'&nbsp;'}</div>
+    <div class="np-g">${[7,8,9,4,5,6,1,2,3].map(k).join('')}${pad.t==='ini'?'<button type="button" data-np="±" aria-label="Changer le signe">±</button>':'<button type="button" data-np="C" aria-label="Effacer">C</button>'}${k(0)}<button type="button" data-np="⌫" aria-label="Retour arrière">⌫</button></div>
+    <button type="button" class="pri np-ok" data-np="ok">OK</button>`;
+}
+function padValider(){
+  const o=pad;padFermer();if(!o)return;const s=sec(o.s);if(!s)return;const n=o.val===''||o.val==='-'?null:num(o.val);
+  if(o.t==='ini'){if(o.val==='')return;if(n==null)delete s.init[o.k];else s.init[o.k]=n}
+  else{const m=s.monstres.find(x=>x.id===o.m);if(!m||n==null)return;m.pv=o.t==='pv'?Math.max(0,n):Math.max(0,num(m.pv)+o.d*Math.abs(n))}
+  rModifie();render();
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-np]');if(!b||!pad)return;ev.stopPropagation();
+  const k=b.dataset.np;
+  if(k==='ok'){padValider();return}
+  if(k==='C')pad.val='';else if(k==='⌫')pad.val=pad.val.slice(0,-1);
+  else if(k==='±')pad.val=pad.val.startsWith('-')?pad.val.slice(1):'-'+(pad.val===''?pad.vieux.replace(/^-/,''):pad.val);
+  else if(pad.val.replace('-','').length<3)pad.val=(pad.val==='0'?'':pad.val)+k;
+  padDessiner()},true);
+/* toucher le champ d'initiative ou de PV : pavé au lieu du clavier système */
+document.addEventListener('pointerdown',ev=>{
+  if(pad&&!(ev.target.closest&&ev.target.closest('.numpad'))){padFermer()}
+  if(ev.pointerType!=='touch'||!grand())return;
+  const i=ev.target.closest&&ev.target.closest('input.ini,input[data-mpv]');if(!i)return;
+  ev.preventDefault();i.readOnly=true;i.blur();
+  if(i.dataset.ini){const x=i.dataset.ini.indexOf('|');padOuvrir({t:'ini',s:i.dataset.ini.slice(0,x),k:i.dataset.ini.slice(x+1)},i)}
+  else{const [si,mi]=i.dataset.mpv.split('|');padOuvrir({t:'pv',s:si,m:mi},i)}
+},true);
+document.addEventListener('keydown',ev=>{if(!pad)return;
+  if(ev.key==='Escape'){padFermer();return}
+  if(ev.key==='Enter'){ev.preventDefault();padValider();return}
+  if(/^[0-9]$/.test(ev.key)&&pad.val.replace('-','').length<3){pad.val+=ev.key;padDessiner()}else if(ev.key==='Backspace'){pad.val=pad.val.slice(0,-1);padDessiner()}});
+window.addEventListener('resize',()=>{if(pad&&!grand())padFermer()});
 function vueConnexion(){
   return `<h1>Espace MJ</h1>
   ${ui.init?`<section><h2>Première connexion</h2>
@@ -813,7 +873,8 @@ function rClic(a,b){
     case 'retirerM':s.monstres=s.monstres.filter(x=>x.id!==b.dataset.m);delete s.init['m:'+b.dataset.m];rModifie();render();return true;
     case 'retirerS':ui.confRetirer=b.dataset.s;render();return true;
     case 'retirerSOui':renc=renc.filter(x=>x.id!==b.dataset.s);ui.confRetirer=null;rModifie();render();return true;
-    case 'mpv':if(m){ui.hpOp={m:m.id,d:num(b.dataset.d)};render();const i=document.querySelector(`[data-op="${s.id}|${m.id}"]`);if(i)i.focus()}return true;
+    case 'mpv':if(m&&padTactile()){padOuvrir({t:'op',s:s.id,m:m.id,d:num(b.dataset.d)},b);return true}
+      if(m){ui.hpOp={m:m.id,d:num(b.dataset.d)};render();const i=document.querySelector(`[data-op="${s.id}|${m.id}"]`);if(i)i.focus()}return true;
     case 'opOk':{const i=document.querySelector('[data-op]');if(i)appliquerOp(i);return true}
     case 'etatsM':ui.etatsM=ui.etatsM===b.dataset.m?null:b.dataset.m;render();return true;
     case 'concM':if(m){m.conc=!m.conc;rModifie();render()}return true;
