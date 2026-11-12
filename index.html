@@ -397,7 +397,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='13.11.2026 à 04:43';
+const VERSION='13.11.2026 à 04:49';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -974,7 +974,12 @@ document.addEventListener('touchend',ev=>{
     try{localStorage.setItem(KEY+'.onglet',ui.onglet)}catch(e){}render();window.scrollTo(0,0);
   }
 },{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code&&charge&&!ui.edit&&!ui.ajout&&!choixEnCours())charger(true)});
+/* au retour sur l'app : recharger, sauf pendant une saisie. Sous Linux (KDE…), afficher le clavier virtuel
+   masque et ré-affiche brièvement la page : recharger à ce moment-là effaçait le champ et refermait le clavier. */
+const saisieEnCours=()=>{const a=document.activeElement;return !!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'||a.isContentEditable)};
+let cacheDepuis=0;
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){cacheDepuis=Date.now();return}
+  if(code&&charge&&!ui.edit&&!ui.ajout&&!choixEnCours()&&!saisieEnCours()&&Date.now()-cacheDepuis>3000)charger(true)});
 /* ---------- listes AideDD 5.5 : suggestions pendant la frappe ----------
    Monstres, sorts, objets magiques et équipement, copiés une fois depuis AideDD sur le serveur.
    L'app les télécharge au premier lancement (puis une fois par semaine) et les garde sur l'appareil :
