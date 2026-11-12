@@ -10,7 +10,15 @@ App des joueurs : https://homotopic-to-the-circle.github.io/DnD_Character/
 
 Ouvre l'adresse dans Chrome (Android) → menu ⋮ → **Installer l'application**. Le code MJ est demandé au premier lancement.
 
-Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dans la barre d'adresse. Sur grand écran, la colonne **À la table** (PV, états, concentration, or de chaque joueur) reste visible à droite et se met à jour toute seule.
+Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dans la barre d'adresse. Sur grand écran, trois colonnes : l'onglet choisi, les **PNJ**, et **À la table** (PV, états, concentration, or de chaque joueur, mis à jour tout seuls). Sur téléphone, les PNJ ont leur propre onglet.
+
+### PNJ
+- Rangés par région ; toucher le nom d'une région la replie ou la déplie. Le compteur indique combien de PNJ les joueurs ont déjà rencontrés.
+- Losange vide et nom pâle = pas encore rencontré ; toucher le losange = rencontré (nom en couleur pleine).
+- Toucher un PNJ ouvre sa fiche ; bouton **★ Principal** pour le mettre en tête de sa région, en rouge.
+- Crayon : ajouter un PNJ dans une région, changer son nom, rôle, n° sur la carte, région, fiche ; créer, renommer ou supprimer une région.
+- Fiche : une ligne par point, `Veut : …`, `Physique : …` (l'intitulé s'affiche en gras) ; une ligne `Note MJ : …` s'affiche en rouge.
+- Les PNJ restent sur le serveur, visibles seulement avec le code MJ, et sont inclus dans **Télécharger l'export**.
 
 Codes joueurs : onglet **Campagne** → Joueurs, bouton **Copier** à côté de chaque code. Le joueur l'entre sur l'écran d'accueil de son app (**Retrouver un personnage**) pour récupérer sa fiche sur n'importe quel appareil. Un code par personnage : ajoute un « joueur » de plus pour un 2e personnage.
 
