@@ -397,7 +397,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='13.11.2026 à 04:35';
+const VERSION='13.11.2026 à 04:43';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -843,8 +843,11 @@ function appliquerOp(i){
   if(m&&n){m.pv=Math.max(0,num(m.pv)+op.d*n);rModifie()}render();
 }
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.dataset&&ev.target.dataset.op){ev.preventDefault();appliquerOp(ev.target)}});
-document.addEventListener('focusout',ev=>{const i=ev.target;if(!(i.dataset&&i.dataset.op))return;
-  setTimeout(()=>{if(!ui.hpOp)return;const r=ev.relatedTarget;if(r&&r.dataset&&r.dataset.a==='opOk')return;appliquerOp(i)},0)});
+/* la saisie se valide quand on touche ailleurs (pas à la perte du focus : sur écran tactile Windows,
+   le clavier virtuel fait perdre le focus aussitôt, ce qui refermait la saisie) */
+document.addEventListener('click',ev=>{if(!ui.hpOp||(ev.target.closest&&ev.target.closest('.hpm.op')))return;
+  const i=document.querySelector('[data-op]');if(i)appliquerOp(i);else ui.hpOp=null},true);
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&ui.hpOp){ui.hpOp=null;render()}});
 
 /* PV des joueurs en direct pendant un combat, sans toucher à la saisie en cours */
 async function rLive(){
