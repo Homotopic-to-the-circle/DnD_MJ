@@ -294,7 +294,7 @@ a.ext{text-decoration:none;color:inherit}
 .pnj-act{justify-content:flex-start;padding-left:30px;flex-wrap:wrap}
 .pnj-ed{display:grid;grid-template-columns:minmax(0,1fr) 4.5em;gap:6px;padding:4px 0 8px 30px}
 .pnj-ed .full{grid-column:1/-1}
-.pnj-ed textarea{min-height:12em;font:inherit;font-size:.92rem;padding:6px}
+.pnj-ed textarea{min-height:17em;font:inherit;font-size:.92rem;padding:6px}
 .pnj-ed input,.pnj-ed select{height:34px;padding:0 8px;min-width:0}
 .mj-bureau>main{min-width:0}
 .table-j{position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 16px);overflow:auto}
@@ -405,7 +405,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 05:27';
+const VERSION='16.11.2026 à 05:59';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -504,7 +504,9 @@ function pnjSauver(){
   }).catch(e=>{flash={err:1,t:'PNJ non enregistrés : '+erreur(e)};renderDock()})}
 try{ui.pnjFerme=JSON.parse(localStorage.getItem(KEY+'.pnjFerme')||'{}');ui.pnjOuv=JSON.parse(localStorage.getItem(KEY+'.pnjOuv')||'{}')}catch(e){ui.pnjFerme={};ui.pnjOuv={}}
 const pnjMem=()=>{try{localStorage.setItem(KEY+'.pnjFerme',JSON.stringify(ui.pnjFerme));localStorage.setItem(KEY+'.pnjOuv',JSON.stringify(ui.pnjOuv))}catch(e){}};
-function ficheHtml(t){return String(t||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([^:]{1,26}?)\s*:\s+(.*)$/);
+/* modèle de fiche (celui des PDF de PNJ) : prérempli pour un nouveau PNJ ; les intitulés laissés vides ne s'affichent pas */
+const PNJ_MODELE=['Note MJ','Veut','Poursuit','Physique','Vêtement','Élocution','Problème','Fil','Vibe'].map(k=>k+' : ').join('\n');
+function ficheHtml(t){return String(t||'').split('\n').map(l=>l.trim()).filter(l=>l&&!/^[^:]{1,26}:$/.test(l)).map(l=>{const m=l.match(/^([^:]{1,26}?)\s*:\s+(.*)$/);
   return m?`<p${/^note/i.test(m[1])?' class="note-mj"':''}><b>${esc(m[1])} :</b> ${esc(m[2])}</p>`:`<p>${esc(l)}</p>`}).join('')}
 function ongPnj(){
   if(!pnjCharge)return `<section><h2>PNJ</h2><p class="muted">PNJ pas encore chargés (pas de connexion ?).</p><button data-a="pnjRecharger">Réessayer</button></section>`;
@@ -520,7 +522,7 @@ function pnjCorps(){
           <input data-pk="nom" data-id="${esc(p.id)}" value="${esc(p.nom)}" aria-label="Nom"><input data-pk="num" data-id="${esc(p.id)}" value="${esc(p.num||'')}" placeholder="n° carte" aria-label="Numéro sur la carte">
           <input class="full" data-pk="titre" data-id="${esc(p.id)}" value="${esc(p.titre||'')}" placeholder="Rôle (ex. le tavernier)" aria-label="Rôle">
           <select class="full" data-pk="region" data-id="${esc(p.id)}" aria-label="Région">${pnj.regions.map(r=>`<option value="${esc(r.id)}"${r.id===p.region?' selected':''}>${esc(r.nom)}</option>`).join('')}</select>
-          <textarea class="full" data-pk="fiche" data-id="${esc(p.id)}" placeholder="Une ligne par point, ex.&#10;Veut : …&#10;Physique : …&#10;Note MJ : …" aria-label="Fiche">${esc(p.fiche||'')}</textarea>
+          <textarea class="full" data-pk="fiche" data-id="${esc(p.id)}" placeholder="Une ligne par point, ex.&#10;Veut : …&#10;Physique : …&#10;Note MJ : …" aria-label="Fiche">${esc(p.fiche||PNJ_MODELE)}</textarea>
           <div class="full row" style="justify-content:space-between"><button class="btn-s ${p.principal?'on':''}" data-a="pnjPrinc" data-id="${esc(p.id)}" aria-pressed="${!!p.principal}">★ Principal</button>${ui.confRetirer==='pnj:'+p.id
             ?`<span class="row"><button class="dgr btn-s" data-a="pnjSupprOui" data-id="${esc(p.id)}">Supprimer ${esc(p.nom)} ?</button><button class="btn-s" data-a="confNon">Annuler</button></span>`
             :`<button class="btn-s" data-a="pnjSuppr" data-id="${esc(p.id)}">Supprimer</button>`}</div></div>`
@@ -551,7 +553,7 @@ function pnjClic(a,b){
     case 'pnjVu':if(p){p.vu=!p.vu;pnjSauver();render()}break;
     case 'pnjPrinc':if(p){p.principal=!p.principal;pnjSauver();render()}break;
     case 'pnjAjout':{const i=document.querySelector(`[data-pnjnouv="${b.dataset.r}"]`),n=i&&i.value.trim();if(!n){flash={err:1,t:'Indique un nom.'};renderDock();break}
-      const id=rid();pnj.liste.unshift({id,nom:n,titre:'',num:'',region:b.dataset.r,principal:false,vu:false,fiche:''});ui.pnjOuv[id]=true;pnjMem();pnjSauver();render();
+      const id=rid();pnj.liste.unshift({id,nom:n,titre:'',num:'',region:b.dataset.r,principal:false,vu:false,fiche:PNJ_MODELE});ui.pnjOuv[id]=true;pnjMem();pnjSauver();render();
       const t=document.querySelector(`[data-pk="titre"][data-id="${id}"]`);if(t)t.focus();break}
     case 'pnjSuppr':ui.confRetirer='pnj:'+b.dataset.id;render();break;
     case 'pnjSupprOui':pnjSuppr.add(b.dataset.id);pnj.liste=pnj.liste.filter(x=>x.id!==b.dataset.id);ui.confRetirer=null;pnjSauver();render();break;
