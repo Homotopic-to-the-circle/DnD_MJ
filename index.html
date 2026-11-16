@@ -280,7 +280,7 @@ a.ext{text-decoration:none;color:inherit}
 .jrn-f{font-size:.98rem}.jrn-f p{margin:4px 0}.jrn-f ul{margin:4px 0;padding-left:20px}.jrn-f .note-mj{font-style:italic;color:var(--accent);font-size:.92rem}
 .jrn-ed{display:grid;grid-template-columns:10.5em minmax(0,1fr);gap:6px}.jrn-ed .full{grid-column:1/-1}
 .jrn-ed textarea{min-height:16em;font:inherit;font-size:.95rem;padding:6px}.jrn-ed input{height:34px;padding:0 8px;min-width:0}
-.pnj-tete{display:flex;gap:10px;align-items:center;border-bottom:2px solid var(--accent);padding-bottom:6px}.pnj-tete h2{margin:0;flex:1;border:none;padding:0}.pnj-tete input{flex:1;min-width:0;height:34px;padding:0 8px}
+.pnj-tete{display:flex;gap:10px;align-items:center}.pnj-tete h2{margin:0;flex:1;border:none;padding:0}.pnj-tete input{flex:1;min-width:0;height:34px;padding:0 8px}
 #pnj-corps{display:flex;flex-direction:column;gap:14px}
 .pnj{border-bottom:1px solid var(--line);padding:5px 0}
 .pnj:last-child{border-bottom:none}
@@ -417,7 +417,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 20:01';
+const VERSION='16.11.2026 à 20:08';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -539,7 +539,7 @@ function ficheHtml(t){return String(t||'').split('\n').map(l=>l.trim()).filter(l
   return m?`<p${/^note/i.test(m[1])?' class="note-mj"':''}><b>${esc(m[1])} :</b> ${esc(m[2])}</p>`:`<p>${esc(l)}</p>`}).join('')}
 function ongPnj(){
   if(!pnjCharge)return `<section><h2>PNJ</h2><p class="muted">PNJ pas encore chargés (pas de connexion ?).</p><button data-a="pnjRecharger">Réessayer</button></section>`;
-  return `<div class="pnj-tete"><h2>PNJ</h2><input type="search" id="pnjq" value="${esc(ui.pnjQ||'')}" placeholder="Chercher" aria-label="Chercher un PNJ" autocomplete="off"></div><div id="pnj-corps">${pnjCorps()}</div>`;
+  return `<div class="pnj-tete"><input type="search" id="pnjq" value="${esc(ui.pnjQ||'')}" placeholder="Chercher un PNJ" aria-label="Chercher un PNJ" autocomplete="off"></div><div id="pnj-corps">${pnjCorps()}</div>`;
 }
 function pnjCorps(){
   const q=refN(ui.pnjQ||''),ok=p=>!q||refN([p.nom,p.titre,p.fiche].join(' ')).includes(q);
