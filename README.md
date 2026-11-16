@@ -16,7 +16,8 @@ Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dan
 - Rangés par région ; toucher le nom d'une région la replie ou la déplie. Le compteur indique combien de PNJ les joueurs ont déjà rencontrés.
 - Losange vide et nom pâle = pas encore rencontré ; toucher le losange = rencontré (nom en couleur pleine).
 - Toucher un PNJ ouvre sa fiche ; bouton **★ Principal** pour le mettre en tête de sa région, en rouge.
-- Crayon : ajouter un PNJ dans une région, changer son nom, rôle, n° sur la carte, région, fiche ; créer, renommer ou supprimer une région.
+- En haut de l'onglet PNJ : nom + région → **Ajouter** ouvre directement sa fiche à remplir (le reste de l'app reste en lecture, journal et archives lisibles à côté) ; **+ Nouvelle région** juste dessous. Sur un PNJ ouvert : **Modifier** pour changer seulement lui, **Terminé** pour fermer.
+- Crayon : renommer ou supprimer une région, tout modifier d'un coup.
 - Fiche : une ligne par point, `Veut : …`, `Physique : …` (l'intitulé s'affiche en gras) ; une ligne `Note MJ : …` s'affiche en rouge.
 - Les PNJ restent sur le serveur, visibles seulement avec le code MJ, et sont inclus dans **Télécharger l'export**.
 
