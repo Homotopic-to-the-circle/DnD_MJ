@@ -439,6 +439,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .part.sans{opacity:.45}
 .part.ko .nom{text-decoration:line-through;color:var(--muted)}
 .part .etat-btn{height:26px;padding:0 8px;font-size:.85rem}
+.part .hpm .etat-btn{width:auto;height:30px;padding:0 8px;font-size:.85rem;margin-left:4px}
 .part .panneau{grid-column:1/-1;grid-row:3;display:flex;flex-direction:column;gap:6px;margin-top:4px}
 .part .etats button{padding:5px 4px;font-size:.92rem}
 .part .etats .conc-b.on{background:var(--conc);border-color:var(--conc)}
@@ -470,7 +471,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 21:52';
+const VERSION='16.11.2026 à 22:19';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -1157,9 +1158,10 @@ function carteM(s,m,sans){
     ${ui.hpOp&&ui.hpOp.m===m.id?`<div class="hpm op"><span class="signe">${ui.hpOp.d<0?'−':'+'}</span><input data-op="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" placeholder="${ui.hpOp.d<0?'dégâts':'soins'}" aria-label="${ui.hpOp.d<0?'PV retirés':'PV ajoutés'}"><button class="pri" data-a="opOk">OK</button></div>`
     :`<div class="hpm"><button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="-1" aria-label="Retirer des PV">−</button>
       <span class="val"><input data-mpv="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" value="${esc(m.pv)}" aria-label="PV de ${esc(m.nom)}"><span class="max">/ ${vide(m.pvMax)?'?':esc(m.pvMax)}</span></span>
-      <button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="1" aria-label="Ajouter des PV">+</button></div>`}
+      <button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="1" aria-label="Ajouter des PV">+</button>
+      <button class="etat-btn ${ouvert?'on':''}" data-a="etatsM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" aria-pressed="${ouvert}">États</button></div>`}
     <div class="panneau" style="${ouvert?'':'display:none'}">${ouvert?`<div class="etats"><button class="conc-b ${m.conc?'on':''}" data-a="concM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" aria-pressed="${!!m.conc}">Concentration</button>${ETATS.map(n=>`<button class="${m.etats[n]?'on':''}" data-a="etatM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-n="${esc(n)}" aria-pressed="${!!m.etats[n]}">${esc(n)}</button>`).join('')}</div>`:''}</div>
-    <div class="bas"><button class="etat-btn ${ouvert?'on':''}" data-a="etatsM" data-s="${esc(s.id)}" data-m="${esc(m.id)}">États</button></div></div>`;
+</div>`;
 }
 function carteJ(s,j,sans){
   return `<div class="card part ${sans?'sans':''}">${iniIn(s,'j:'+j.id,j.init)}
