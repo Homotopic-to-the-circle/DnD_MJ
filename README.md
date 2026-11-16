@@ -137,3 +137,10 @@ Ce que la mise à jour fait :
 - **Repos court** : pas de bouton, décoche les cases à la main.
 - **Dés de vie et épuisement** : compteurs à gérer à la main.
 - **Initiative des monstres** (app MJ) : pas dans la liste AideDD, à entrer soi-même. Les PV moyens, eux, se remplissent.
+
+### Lire les documents des Archives
+Toucher le titre d'un document l'ouvre dans l'app (plus la visionneuse du navigateur) : sur ordi dans la colonne du milieu, à côté des PNJ, avec **‹** pour revenir à la liste.
+- Champ **Chercher dans le document** : les passages sont surlignés, Entrée passe au suivant (Maj+Entrée : précédent).
+- **⤢** plein écran ; un document d'une seule page (carte…) s'ouvre directement en plein écran : zoom à la molette ou à deux doigts, déplacement en glissant, Échap pour fermer.
+- **↗** ouvre le fichier dans le navigateur, en secours. Un document déjà ouvert une fois se relit hors ligne.
+
