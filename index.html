@@ -268,7 +268,10 @@ html,body,*{scrollbar-width:none}
 ::-webkit-scrollbar{width:0;height:0;background:transparent}
 /* ordinateur : chaque colonne défile seule, ses onglets restent en haut */
 .grand .bureau>.col{position:sticky;top:var(--haut-top,80px);max-height:calc(100vh - var(--haut-top,80px) - 6px);overflow:auto;overscroll-behavior:contain;padding:2px 2px 28px}
-.grand .bureau>.col>.tabs{position:sticky;top:0;z-index:3;background:var(--bg);margin-top:-2px;padding-top:2px}
+/* colonne à onglets : les onglets ne défilent pas, seul le contenu dessous défile */
+.grand .bureau>.col.onglets{overflow:hidden;padding:2px 2px 0;gap:0}
+.grand .bureau>.col.onglets>.tabs{flex:none;margin-bottom:12px}
+.grand .bureau>.col.onglets>.defile{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:18px;padding:0 0 28px}
 .bureau>.col{min-width:0;display:flex;flex-direction:column;gap:18px}
 .liste-large>div{display:flex;flex-direction:column;gap:14px}
 .liste-large{display:flex;flex-direction:column;gap:14px}
@@ -312,9 +315,11 @@ html,body,*{scrollbar-width:none}
 .pnj-ed .full{grid-column:1/-1}
 .pnj-ed textarea{min-height:17em;font:inherit;font-size:.92rem;padding:6px}
 .pnj-ed input,.pnj-ed select{height:34px;padding:0 8px;min-width:0}
-.mj-bureau>main{min-width:0;position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 6px);overflow:auto;overscroll-behavior:contain;padding:3px 3px 28px}
-.mj-bureau>*>.tabs{position:sticky;top:0;z-index:3;background:var(--bg);margin-top:-3px;padding-top:3px}
-.pnj-col,.table-j{overscroll-behavior:contain;padding-bottom:28px!important}
+/* colonnes à onglets : les onglets restent fixes, seul le contenu dessous (.defile) défile */
+.mj-bureau>main,.mj-bureau>.pnj-col{min-width:0;position:sticky;top:var(--haut-top,110px);height:calc(100vh - var(--haut-top,110px) - 6px);max-height:none;overflow:hidden;display:flex;flex-direction:column;gap:0;padding:3px 3px 0}
+.mj-bureau>*>.tabs{flex:none;margin-bottom:12px}
+.mj-bureau .defile{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:16px;padding:0 0 28px}
+.table-j{overscroll-behavior:contain;padding-bottom:28px!important}
 .table-j{position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 16px);overflow:auto}
 .table-j{display:flex;flex-direction:column;gap:8px}
 .table-j h2{margin-top:0}
@@ -430,7 +435,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 21:05';
+const VERSION='16.11.2026 à 21:15';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -491,13 +496,14 @@ function rendu(){
   const g=grand(),ong=g&&!ONGLETS_ORDI.some(o=>o[0]===ui.onglet)?'pnj':ui.onglet;
   const tabs=ongl().map(([k,l])=>`<button data-a="onglet" data-o="${k}" aria-current="${ong===k}">${l}</button>`).join('');
   const corps={objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,archives:()=>'<h2 style="margin-bottom:-6px">Journal</h2>'+ongJournal()+ongArchives(),campagne:ongCampagne,pnj:ongPnj}[ong]||ongRencontres;
-  const hauts=[...document.querySelectorAll('.mj-bureau>*')].map(c=>c.scrollTop);
+  const defil=c=>c.querySelector(':scope>.defile')||c;
+  const hauts=[...document.querySelectorAll('.mj-bureau>*')].map(c=>defil(c).scrollTop);
   app.innerHTML=`<header class="top"><div class="row"><div class="titre"><h1>${esc(etat.campagne.nom)}</h1></div>
     <button data-a="edit" class="icone ${ui.edit?'on':''}" aria-pressed="${ui.edit}" aria-label="${ui.edit?'Terminer':'Modifier'}">${ui.edit
       ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
       :'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>'}</button></div>
-    ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main><nav class="tabs">${tabs}</nav>${corps()}</main><aside class="pnj-col" aria-label="${({rencontres:'Rencontres',archives:'Archives',journal:'Journal'})[col2()]}">${col2Html()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
-  anim='';document.querySelectorAll('.mj-bureau>*').forEach((c,i)=>{c.scrollTop=(i===0&&gaucheHaut)||(i===1&&col2Haut)?0:(hauts[i]||0)});col2Haut=false;gaucheHaut=false;
+    ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main><nav class="tabs">${tabs}</nav><div class="defile">${corps()}</div></main><aside class="pnj-col" aria-label="${({rencontres:'Rencontres',archives:'Archives',journal:'Journal'})[col2()]}">${col2Html()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
+  anim='';document.querySelectorAll('.mj-bureau>*').forEach((c,i)=>{defil(c).scrollTop=(i===0&&gaucheHaut)||(i===1&&col2Haut)?0:(hauts[i]||0)});col2Haut=false;gaucheHaut=false;
   clavierOrdi();
   if(grand()){const t=document.querySelector('.top');if(t)document.documentElement.style.setProperty('--haut-top',(t.offsetHeight+12)+'px')}
 }
@@ -674,7 +680,7 @@ const col2=()=>{const v=ui.col2;return ['rencontres','archives','journal'].inclu
 try{ui.col2=localStorage.getItem(KEY+'.col2')||'rencontres'}catch(e){}
 function col2Html(){const c=col2();
   return `<nav class="tabs col2-tabs">${[['rencontres','Rencontres'],['archives','Archives'],['journal','Journal']].map(([k,l])=>`<button data-a="col2" data-o="${k}" aria-current="${c===k}">${l}</button>`).join('')}</nav>`
-    +({rencontres:ongRencontres,archives:ongArchives,journal:ongJournal})[c]()}
+    +'<div class="defile">'+({rencontres:ongRencontres,archives:ongArchives,journal:ongJournal})[c]()+'</div>'}
 
 /* ---------- Journal de campagne : une entrée par session ----------
    [{id, date (AAAA-MM-JJ), titre, texte}] ; texte : une ligne « Intitulé : … », des lignes « - … » pour les listes, « Note MJ : … » en rouge. */
