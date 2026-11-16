@@ -22,7 +22,7 @@ Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dan
 
 Codes joueurs : onglet **Campagne** → Joueurs, bouton **Copier** à côté de chaque code. Le joueur l'entre sur l'écran d'accueil de son app (**Retrouver un personnage**) pour récupérer sa fiche sur n'importe quel appareil. Un code par personnage : ajoute un « joueur » de plus pour un 2e personnage.
 
-Pour récupérer une nouvelle version : onglet **Campagne** → **Mettre à jour l'application**.
+Pour récupérer une nouvelle version : onglet **Campagne** → **Mettre à jour l'application**. Juste à côté, **Thème** : jour, nuit ou selon l'heure — commun à toutes les apps Dal-Mor (MJ, Fiches, Sonerezh) sur cet appareil.
 
 Ce dépôt est généré à partir du même code que l'app des joueurs ; ne pas le modifier à la main.
 
