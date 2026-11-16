@@ -297,6 +297,9 @@ html,body,*{scrollbar-width:none}
 .pnj-rapide{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pnj-rapide .code-row{width:100%}
 .pnj-rapide select{height:38px;max-width:40%;padding:0 6px}
 .lien-s{background:none;border:none;padding:0;height:auto;min-height:0;font:inherit;font-size:.9rem;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);text-underline-offset:3px}
+.pnj-ico{display:flex;gap:4px;flex:none}
+.pnj-ico .ico{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;line-height:1;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:4px}
+.pnj-ico .ico.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .pnj-tete{display:flex;gap:10px;align-items:center}.pnj-tete h2{margin:0;flex:1;border:none;padding:0}.pnj-tete input{flex:1;min-width:0;height:34px;padding:0 8px}
 #pnj-corps{display:flex;flex-direction:column;gap:14px}
 .pnj{border-bottom:1px solid var(--line);padding:5px 0}
@@ -438,7 +441,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 21:23';
+const VERSION='16.11.2026 à 21:28';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -568,17 +571,20 @@ function pnjCorps(){
   const ligne=p=>{const ed=ui.edit||ui.pnjEdit===p.id,o=ui.pnjOuv[p.id]||(q&&ui.edit)||ui.pnjEdit===p.id;
     return `<div class="pnj ${p.vu?'vu':'non-vu'}${p.principal?' princ':''}"><div class="pnj-l">
       <button class="box ${p.vu?'on':''}" data-a="pnjVu" data-id="${esc(p.id)}" aria-pressed="${!!p.vu}" title="${p.vu?'Déjà rencontré':'Pas encore rencontré'}" aria-label="${esc(p.nom)} rencontré"></button>
-      <span class="pnj-n" data-a="pnjOuvrir" data-id="${esc(p.id)}">${p.num?`<span class="pnj-num">${esc(p.num)}</span>`:''}${p.principal?'<span class="etoile" title="PNJ principal">★</span>':''}<b>${esc(p.nom)}</b>${p.titre?` <span class="pnj-t">${esc(p.titre)}</span>`:''}</span></div>
+      <span class="pnj-n" data-a="pnjOuvrir" data-id="${esc(p.id)}">${p.num?`<span class="pnj-num">${esc(p.num)}</span>`:''}${p.principal?'<span class="etoile" title="PNJ principal">★</span>':''}<b>${esc(p.nom)}</b>${p.titre?` <span class="pnj-t">${esc(p.titre)}</span>`:''}</span>
+      ${o?`<span class="pnj-ico"><button class="ico${p.principal?' on':''}" data-a="pnjPrinc" data-id="${esc(p.id)}" aria-pressed="${!!p.principal}" title="PNJ principal" aria-label="PNJ principal">★</button>${ui.edit?'':`<button class="ico${ui.pnjEdit===p.id?' on':''}" data-a="${ui.pnjEdit===p.id?'pnjFini':'pnjModif'}" data-id="${esc(p.id)}" aria-pressed="${ui.pnjEdit===p.id}" title="${ui.pnjEdit===p.id?'Terminer':'Modifier'}" aria-label="${ui.pnjEdit===p.id?'Terminer la modification':'Modifier '+esc(p.nom)}">${ui.pnjEdit===p.id
+        ?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+        :'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>'}</button>`}</span>`:''}</div>
       ${!o?'':ed?`<div class="pnj-ed">
           <input data-pk="nom" data-id="${esc(p.id)}" value="${esc(p.nom)}" aria-label="Nom"><input data-pk="num" data-id="${esc(p.id)}" value="${esc(p.num||'')}" placeholder="n° carte" aria-label="Numéro sur la carte">
           <input class="full" data-pk="titre" data-id="${esc(p.id)}" value="${esc(p.titre||'')}" placeholder="Rôle (ex. le tavernier)" aria-label="Rôle">
           <select class="full" data-pk="region" data-id="${esc(p.id)}" aria-label="Région">${pnj.regions.map(r=>`<option value="${esc(r.id)}"${r.id===p.region?' selected':''}>${esc(r.nom)}</option>`).join('')}</select>
           <textarea class="full" data-pk="fiche" data-id="${esc(p.id)}" placeholder="Une ligne par point, ex.&#10;Veut : …&#10;Physique : …&#10;Note MJ : …" aria-label="Fiche">${esc(p.fiche||PNJ_MODELE)}</textarea>
-          <div class="full row" style="justify-content:space-between"><button class="btn-s ${p.principal?'on':''}" data-a="pnjPrinc" data-id="${esc(p.id)}" aria-pressed="${!!p.principal}">★ Principal</button>${ui.confRetirer==='pnj:'+p.id
+          <div class="full row" style="justify-content:end">${ui.confRetirer==='pnj:'+p.id
             ?`<span class="row"><button class="dgr btn-s" data-a="pnjSupprOui" data-id="${esc(p.id)}">Supprimer ${esc(p.nom)} ?</button><button class="btn-s" data-a="confNon">Annuler</button></span>`
-            :`<span class="row">${ui.edit?'':`<button class="btn-s pri" data-a="pnjFini" data-id="${esc(p.id)}">Terminé</button>`}<button class="btn-s" data-a="pnjSuppr" data-id="${esc(p.id)}">Supprimer</button></span>`}</div></div>`
+            :`<button class="btn-s" data-a="pnjSuppr" data-id="${esc(p.id)}">Supprimer</button>`}</div></div>`
         :`<div class="pnj-f">${ficheHtml(p.fiche)||'<p class="muted">Pas de fiche. Ajoute-la avec le crayon.</p>'}</div>
-          <div class="row pnj-act"><button class="btn-s ${p.principal?'on':''}" data-a="pnjPrinc" data-id="${esc(p.id)}" aria-pressed="${!!p.principal}">★ Principal</button><button class="btn-s" data-a="pnjModif" data-id="${esc(p.id)}">Modifier</button></div>`}</div>`};
+`}</div>`};
   const bloc=r=>{
     const tous=pnj.liste.filter(p=>p.region===r.id),l=tous.filter(ok).sort((a,b)=>(b.principal?1:0)-(a.principal?1:0));
     if(q&&!l.length)return '';
