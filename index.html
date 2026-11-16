@@ -308,7 +308,10 @@ a.ext{text-decoration:none;color:inherit}
 .tj .corps{cursor:pointer}.tj.absent>.corps{opacity:.5}.tj.ouvert{border-color:var(--accent)}
 .tj-plus{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;align-items:flex-start;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
 .tj-plus .code{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tj-plus .code span{white-space:nowrap}.tj-plus .code b{letter-spacing:.04em;white-space:nowrap}
-.outils{display:flex;flex-wrap:wrap;gap:6px}
+.liens{display:flex;flex-direction:column;align-items:flex-start;gap:7px;font-size:.92rem}
+.liens button{background:none;border:none;box-shadow:none;padding:0;min-height:0;height:auto;width:auto;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);text-underline-offset:3px}
+.liens button:hover,.liens button:focus-visible{text-decoration-color:currentColor}
+.liens .muted{font-size:.8rem;font-style:italic}
 .table-j .part{grid-template-columns:minmax(0,1fr) auto}
 /* compléments propres à l'app MJ (même parchemin que l'app joueur) */
 .jr{padding:8px 0;border-bottom:1px solid var(--line)}
@@ -414,7 +417,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 19:53';
+const VERSION='16.11.2026 à 20:01';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -508,9 +511,9 @@ function tableJ(){
     <div class="row code-row"><input id="jnom" placeholder="Nouveau joueur"><button data-a="ajoutJ">Ajouter</button></div>
     <h2 style="margin-top:14px">Campagne</h2>
     ${ui.edit?`<div class="row code-row"><input id="cnom" value="${esc(etat.campagne.nom)}" aria-label="Nom de la campagne"><button data-a="renommer">Renommer</button></div>`:''}
-    <div class="outils"><button class="btn-s" data-a="exporter">Télécharger l’export</button><button class="btn-s" data-a="majApp">Mettre à jour l’application</button>
-      ${ui.confSortir?`<button class="dgr btn-s" data-a="sortirOui">Oublier le code MJ ?</button><button class="btn-s" data-a="confNon">Annuler</button>`:`<button class="btn-s" data-a="sortir">Se déconnecter</button>`}</div>
-    <p class="muted" style="font-size:.8rem;margin:4px 0 0">Version du ${esc(VERSION)}.</p>`;
+    <div class="liens"><button data-a="exporter">Télécharger l’export</button><button data-a="majApp">Mettre à jour l’application</button>
+      ${ui.confSortir?`<span>Oublier le code MJ sur cet appareil ? <button data-a="sortirOui">Oui</button> · <button data-a="confNon">Non</button></span>`:`<button data-a="sortir">Se déconnecter</button>`}
+      <span class="muted">Version du ${esc(VERSION)}</span></div>`;
 }
 /* ---------- PNJ ----------
    Rangés par région. Losange plein = déjà rencontré par les joueurs (en clair sinon), ★ = PNJ principal (en tête de sa région).
