@@ -296,10 +296,15 @@ html,body,*{scrollbar-width:none}
 .jrn-ed textarea{min-height:16em;font:inherit;font-size:.95rem;padding:6px}.jrn-ed input{height:34px;padding:0 8px;min-width:0}
 .pnj-rapide{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pnj-rapide .code-row{width:100%}
 .pnj-rapide select{height:38px;max-width:40%;padding:0 6px}
-.lien-s{background:none;border:none;padding:0;height:auto;min-height:0;font:inherit;font-size:.9rem;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);text-underline-offset:3px}
+.lien-s{display:block;margin-top:8px;text-align:left;background:none;border:none;padding:0;height:auto;min-height:0;font:inherit;font-size:.9rem;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);text-underline-offset:3px}
 .pnj-ico{display:flex;gap:4px;flex:none}
 .pnj-ico .ico{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;line-height:1;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:4px}
 .pnj-ico .ico.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.noms-r{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.nom-r button:not(.x){height:30px;padding:0 10px;font-size:.95rem;border:1px dashed var(--line);border-radius:15px;background:transparent;color:var(--fg)}
+.nom-r button:not(.x):hover{border-color:var(--accent);color:var(--accent)}
+.nom-r:has(.x){display:inline-flex;align-items:center;gap:2px;padding-left:10px;border:1px dashed var(--line);border-radius:15px;font-size:.95rem}
+.reserve-cible{gap:6px;font-size:.9rem}.reserve-cible select{height:30px;padding:0 6px;max-width:55%}
 .pnj-tete{display:flex;gap:10px;align-items:center}.pnj-tete h2{margin:0;flex:1;border:none;padding:0}.pnj-tete input{flex:1;min-width:0;height:34px;padding:0 8px}
 #pnj-corps{display:flex;flex-direction:column;gap:14px}
 .pnj{border-bottom:1px solid var(--line);padding:5px 0}
@@ -441,7 +446,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 21:28';
+const VERSION='16.11.2026 à 21:33';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -544,7 +549,7 @@ function tableJ(){
    Rangés par région. Losange plein = déjà rencontré par les joueurs (en clair sinon), ★ = PNJ principal (en tête de sa région).
    La fiche est un texte libre : chaque ligne « Veut : … » s'affiche avec son intitulé en gras ; « Note MJ : … » en rouge. */
 let pnj={regions:[],liste:[]},pnjCharge=false,pnjFile=Promise.resolve();
-async function chargerPnj(){try{const r=await rpc('mj_pnj',{p_code:code});pnj={regions:(r&&r.regions)||[],liste:(r&&r.liste)||[]};pnjCharge=true}catch(e){}}
+async function chargerPnj(){try{const r=await rpc('mj_pnj',{p_code:code});pnj={regions:(r&&r.regions)||[],liste:(r&&r.liste)||[],noms:(r&&r.noms)||[]};pnjCharge=true}catch(e){}}
 /* avant d'enregistrer, on reprend les PNJ et régions ajoutés ailleurs (autre appareil, Claude…) pour ne pas les écraser */
 const pnjSuppr=new Set();
 function pnjSauver(){
@@ -552,6 +557,7 @@ function pnjSauver(){
     let srv=null;try{srv=await rpc('mj_pnj',{p_code:code})}catch(e){}
     if(srv){const ids=new Set(pnj.liste.map(x=>x.id)),rids=new Set(pnj.regions.map(x=>x.id));let plus=false;
       (srv.regions||[]).forEach(r=>{if(!rids.has(r.id)&&!pnjSuppr.has(r.id)){pnj.regions.push(r);plus=true}});
+      (srv.noms||[]).forEach(x=>{if(!pnj.noms.some(y=>y.id===x.id)&&!pnjSuppr.has(x.id)){pnj.noms.push(x);plus=true}});
       (srv.liste||[]).forEach(x=>{if(!ids.has(x.id)&&!pnjSuppr.has(x.id)&&!pnjSuppr.has(x.region)){pnj.liste.push(x);plus=true}});
       if(plus&&!saisieEnCours())render()}
     return rpc('mj_pnj_sauver',{p_code:code,p_doc:JSON.parse(JSON.stringify(pnj))});
@@ -604,10 +610,23 @@ function pnjCorps(){
       <select id="pnjRegRapide" aria-label="Région">${pnj.regions.map(r=>`<option value="${esc(r.id)}"${r.id===der?' selected':''}>${esc(r.nom)}</option>`).join('')}</select><button data-a="pnjAjoutRapide">Ajouter</button></div>
     ${ui.pnjRegRapide?`<div class="row code-row"><input id="pnjNouvReg" placeholder="Nouvelle région (ex. Port de Kessa)"><button data-a="pnjAjoutReg">Créer</button><button class="btn-s" data-a="pnjRegRapide">Annuler</button></div>`
       :`<button class="lien-s" data-a="pnjRegRapide">+ Nouvelle région</button>`}</div>`;
-  return rapide+(ui.edit||!pnj.regions.length?nouv:'')+(pnj.regions.map(bloc).join('')||(q?'<p class="muted">Aucun PNJ trouvé.</p>':''))+(!ui.edit&&pnj.regions.length?'<p class="muted" style="font-size:.85rem">Crayon : renommer ou supprimer des régions.</p>':'');
+  return rapide+(ui.edit||!pnj.regions.length?nouv:'')+(pnj.regions.map(bloc).join('')||(q?'<p class="muted">Aucun PNJ trouvé.</p>':''))+(q?'':reserveNoms(der))+(!ui.edit&&pnj.regions.length?'<p class="muted" style="font-size:.85rem">Crayon : renommer ou supprimer des régions.</p>':'');
+}
+/* Réserve de noms : un clic sur un nom en fait un PNJ (dans la région choisie) et le retire de la réserve */
+function reserveNoms(der){
+  const N=pnj.noms||[],ferme=!ui.edit&&ui.pnjFerme._noms,groupes=[...new Set(N.map(x=>x.groupe||''))];
+  const puce=x=>`<span class="nom-r">${ui.edit
+      ?`${esc(x.nom)}<button class="x" data-a="nomSuppr" data-id="${esc(x.id)}" aria-label="Retirer ${esc(x.nom)}">✕</button>`
+      :`<button data-a="nomPrendre" data-id="${esc(x.id)}" title="En faire un PNJ">${esc(x.nom)}</button>`}</span>`;
+  return `<section><h2 class="h2b"><span data-a="pnjReg" data-r="_noms">Réserve de noms<span class="nb">${N.length} nom${N.length>1?'s':''}${ferme?' ▸':''}</span></span></h2>
+    ${ferme?'':`${N.length&&pnj.regions.length&&!ui.edit?`<div class="row reserve-cible"><span class="muted">Un clic sur un nom en fait un PNJ dans</span><select id="nomRegion" aria-label="Région du nouveau PNJ">${pnj.regions.map(r=>`<option value="${esc(r.id)}"${r.id===der?' selected':''}>${esc(r.nom)}</option>`).join('')}</select></div>`:''}
+      ${groupes.map(g=>`${g?`<div class="lab" style="margin-top:6px">${esc(g)}</div>`:''}<div class="noms-r">${N.filter(x=>(x.groupe||'')===g).map(puce).join('')}</div>`).join('')||'<p class="muted">Aucun nom en réserve.</p>'}
+      ${ui.nomsAjout?`<textarea id="nomsTexte" rows="6" placeholder="Un nom par ligne.&#10;Une ligne « ## Groupe » pour classer (ex. ## Nains)."></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn-s pri" data-a="nomsAjouter">Ajouter à la réserve</button><button class="btn-s" data-a="nomsAjoutBasc">Annuler</button></div>`
+        :`<button class="lien-s" data-a="nomsAjoutBasc">+ Ajouter des noms</button>`}`}</section>`;
 }
 function pnjClic(a,b){
-  if(!a.startsWith('pnj'))return false;
+  if(!a.startsWith('pnj')&&!a.startsWith('nom'))return false;
   const p=b.dataset.id?pnj.liste.find(x=>x.id===b.dataset.id):null;
   switch(a){
     case 'pnjRecharger':chargerPnj().then(render);break;
@@ -623,6 +642,16 @@ function pnjClic(a,b){
       const id=rid();pnj.liste.unshift({id,nom:n,titre:'',num:'',region:r,principal:false,vu:false,fiche:PNJ_MODELE});
       ui.pnjDerReg=r;ui.pnjEdit=id;ui.pnjOuv[id]=true;ui.pnjFerme[r]=false;ui.pnjQ='';pnjMem();pnjSauver();render();
       const t=document.querySelector(`[data-pk="titre"][data-id="${id}"]`);if(t){t.focus();t.scrollIntoView({block:'nearest'})}break}
+    case 'nomPrendre':{const x=(pnj.noms||[]).find(y=>y.id===b.dataset.id),r=(document.getElementById('nomRegion')||{}).value||(pnj.regions[0]||{}).id;if(!x||!r)break;
+      const id=rid();pnj.liste.unshift({id,nom:x.nom,titre:'',num:'',region:r,principal:false,vu:false,fiche:PNJ_MODELE});
+      pnjSuppr.add(x.id);pnj.noms=pnj.noms.filter(y=>y.id!==x.id);ui.pnjDerReg=r;ui.pnjOuv[id]=true;ui.pnjFerme[r]=false;pnjMem();pnjSauver();
+      flash={t:`${x.nom} ajouté à ${(pnj.regions.find(z=>z.id===r)||{}).nom||'la région'}.`};render();break}
+    case 'nomSuppr':pnjSuppr.add(b.dataset.id);pnj.noms=(pnj.noms||[]).filter(y=>y.id!==b.dataset.id);pnjSauver();render();break;
+    case 'nomsAjoutBasc':ui.nomsAjout=!ui.nomsAjout;render();if(ui.nomsAjout){const t=document.getElementById('nomsTexte');if(t)t.focus()}break;
+    case 'nomsAjouter':{const t=document.getElementById('nomsTexte');if(!t)break;let g='',n=0;pnj.noms=pnj.noms||[];
+      for(const l0 of t.value.split('\n')){const l=l0.trim().replace(/^[-•*]\s*/,'');if(!l)continue;const m=l.match(/^#+\s*(.+)$/);if(m){g=m[1].trim();continue}
+        for(const nom of l.split(/\s*[,;]\s*/).filter(Boolean))if(!pnj.noms.some(y=>y.nom===nom&&(y.groupe||'')===g)){pnj.noms.push({id:rid(),nom,groupe:g});n++}}
+      ui.nomsAjout=false;pnjSauver();flash={t:n+' nom'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+' à la réserve.'};render();break}
     case 'pnjModif':ui.pnjEdit=b.dataset.id;ui.pnjOuv[b.dataset.id]=true;render();break;
     case 'pnjFini':ui.pnjEdit=null;render();break;
     case 'pnjRegRapide':ui.pnjRegRapide=!ui.pnjRegRapide;render();if(ui.pnjRegRapide){const i=document.getElementById('pnjNouvReg');if(i)i.focus()}break;

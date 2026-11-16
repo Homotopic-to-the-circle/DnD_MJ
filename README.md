@@ -17,7 +17,8 @@ Sur ordinateur : même adresse dans Chrome ou Edge → icône d'installation dan
 - Losange vide et nom pâle = pas encore rencontré ; toucher le losange = rencontré (nom en couleur pleine).
 - Toucher un PNJ ouvre sa fiche ; bouton **★ Principal** pour le mettre en tête de sa région, en rouge.
 - En haut de l'onglet PNJ : nom + région → **Ajouter** ouvre directement sa fiche à remplir (le reste de l'app reste en lecture, journal et archives lisibles à côté) ; **+ Nouvelle région** juste dessous. Sur un PNJ ouvert, à côté de son nom : ★ (principal) et le crayon (modifier seulement lui ; ✓ pour terminer).
-- Crayon : renommer ou supprimer une région, tout modifier d'un coup.
+- **Réserve de noms** (fin de l'onglet PNJ) : choisis la région, puis un clic sur un nom en fait un PNJ (le nom quitte la réserve). « + Ajouter des noms » : un par ligne, « ## Groupe » pour classer.
+- Crayon : renommer ou supprimer une région, retirer des noms de la réserve, tout modifier d'un coup.
 - Fiche : une ligne par point, `Veut : …`, `Physique : …` (l'intitulé s'affiche en gras) ; une ligne `Note MJ : …` s'affiche en rouge.
 - Les PNJ restent sur le serveur, visibles seulement avec le code MJ, et sont inclus dans **Télécharger l'export**.
 
