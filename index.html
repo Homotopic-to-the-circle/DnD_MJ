@@ -273,7 +273,7 @@ a.ext{text-decoration:none;color:inherit}
 .np-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .np-g button{height:52px;font-size:1.35rem;padding:0;-webkit-user-select:none;user-select:none}
 .np-ok{height:48px;font-size:1.1rem}
-.mj-bureau{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(270px,.55fr);gap:28px;align-items:start}
+.mj-bureau{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(280px,.5fr);gap:28px;align-items:start}
 .pnj-col{position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 16px);overflow:auto;display:flex;flex-direction:column;gap:14px;padding:3px 6px 0 3px}
 .col2-tabs{margin-bottom:2px}
 .jrn-t{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -305,6 +305,10 @@ a.ext{text-decoration:none;color:inherit}
 .table-j{position:sticky;top:var(--haut-top,110px);max-height:calc(100vh - var(--haut-top,110px) - 16px);overflow:auto}
 .table-j{display:flex;flex-direction:column;gap:8px}
 .table-j h2{margin-top:0}
+.tj .corps{cursor:pointer}.tj.absent>.corps{opacity:.5}.tj.ouvert{border-color:var(--accent)}
+.tj-plus{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;align-items:flex-start;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
+.tj-plus .code{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tj-plus .code span{white-space:nowrap}.tj-plus .code b{letter-spacing:.04em;white-space:nowrap}
+.outils{display:flex;flex-wrap:wrap;gap:6px}
 .table-j .part{grid-template-columns:minmax(0,1fr) auto}
 /* compléments propres à l'app MJ (même parchemin que l'app joueur) */
 .jr{padding:8px 0;border-bottom:1px solid var(--line)}
@@ -410,11 +414,12 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='16.11.2026 à 19:37';
+const VERSION='16.11.2026 à 19:53';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
-const ongl=()=>grand()?ONGLETS.filter(o=>o[0]!=='archives'):ONGLETS_TEL;
+const ONGLETS_ORDI=[['pnj','PNJ'],['objets','Objets'],['envois','Envois']];
+const ongl=()=>grand()?ONGLETS_ORDI:ONGLETS_TEL;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{const n=parseInt(v,10);return isNaN(n)?0:n};
 const jolieCle=c=>String(c||'').replace(/(.{4})(?=.)/g,'$1-');
@@ -467,7 +472,7 @@ function rendu(){
   const app=document.getElementById('app');
   if(!code){app.innerHTML=vueConnexion();return}
   if(!charge){app.innerHTML=`<h1>MJ</h1><p class="muted">Chargement…</p>`;return}
-  const g=grand(),ong=g&&(ui.onglet==='pnj'||ui.onglet==='archives')?'rencontres':ui.onglet;
+  const g=grand(),ong=g&&!ONGLETS_ORDI.some(o=>o[0]===ui.onglet)?'pnj':ui.onglet;
   const tabs=ongl().map(([k,l])=>`<button data-a="onglet" data-o="${k}" aria-current="${ong===k}">${l}</button>`).join('');
   const corps={objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,archives:()=>'<h2 style="margin-bottom:-6px">Journal</h2>'+ongJournal()+ongArchives(),campagne:ongCampagne,pnj:ongPnj}[ong]||ongRencontres;
   const pc=document.querySelector('.pnj-col'),pcHaut=pc?pc.scrollTop:0;
@@ -475,7 +480,7 @@ function rendu(){
     <button data-a="edit" class="icone ${ui.edit?'on':''}" aria-pressed="${ui.edit}" aria-label="${ui.edit?'Terminer':'Modifier'}">${ui.edit
       ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
       :'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>'}</button></div>
-    ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main class="${anim}"><nav class="tabs">${tabs}</nav>${corps()}</main><aside class="pnj-col" aria-label="${({pnj:'PNJ',archives:'Archives',journal:'Journal'})[col2()]}">${col2Html()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
+    ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main><nav class="tabs">${tabs}</nav>${corps()}</main><aside class="pnj-col" aria-label="${({rencontres:'Rencontres',archives:'Archives',journal:'Journal'})[col2()]}">${col2Html()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
   anim='';{const pc2=document.querySelector('.pnj-col');if(pc2)pc2.scrollTop=col2Haut?0:pcHaut;col2Haut=false}
   clavierOrdi();
   if(grand()){const t=document.querySelector('.top');if(t)document.documentElement.style.setProperty('--haut-top',(t.offsetHeight+12)+'px')}
@@ -485,11 +490,27 @@ const GRAND=window.matchMedia?matchMedia('(min-width: 1000px)'):{matches:false};
 const grand=()=>GRAND.matches;
 document.documentElement.classList.toggle('grand',GRAND.matches);
 if(GRAND.addEventListener)GRAND.addEventListener('change',()=>{document.documentElement.classList.toggle('grand',GRAND.matches);render()});
+const absentJ=id=>{const e=etat&&(etat.joueurs||[]).find(x=>x.id===id);return !!(e&&e.absent)};
 function tableJ(){
-  const l=live.filter(j=>j.pv!=null);
-  return `<h2>À la table</h2>${l.length?l.map(j=>{const e=(etat&&etat.joueurs||[]).find(x=>x.id===j.id),o=e?orJ(e):null;
-    return `<div class="card part"><div class="corps"><span class="nom">${esc(j.perso||j.nom)}</span>${j.perso&&j.perso!==j.nom?`<span class="note">${esc(j.nom)}</span>`:''}${o!=null?`<span class="note">${esc(o)} po</span>`:''}${chipsJ(j)}</div>
-      <div class="hpj">${hpJ(j)}</div></div>`}).join(''):'<p class="muted">Aucun personnage relié pour l’instant.</p>'}`;
+  const js=(etat&&etat.joueurs)||[],tri=[...js.filter(j=>!j.absent),...js.filter(j=>j.absent)];
+  const carte=e=>{const j=live.find(x=>x.id===e.id)||{},o=orJ(e),ouv=ui.jOuv===e.id,id=esc(e.id);
+    if(ui.edit)return `<div class="card part"><div class="corps"><div class="row code-row"><input data-jnom="${id}" value="${esc(e.nom)}" aria-label="Nom du joueur">${ui.confRetirer===e.id
+        ?`<button class="dgr btn-s" data-a="retirerJOui" data-id="${id}">Retirer ?</button>`:`<button class="x" data-a="retirerJ" data-id="${id}" aria-label="Retirer ${esc(e.nom)}">✕</button>`}</div></div></div>`;
+    return `<div class="card part tj${e.absent?' absent':''}${ouv?' ouvert':''}"><div class="corps" data-a="jOuvrir" data-id="${id}" role="button" aria-expanded="${ouv}">
+        <span class="nom">${esc(e.perso||e.nom)}</span>${e.perso&&e.perso!==e.nom?`<span class="note">${esc(e.nom)}</span>`:''}
+        ${e.absent?'<span class="note">pas à la table</span>':`${o!=null?`<span class="note">${esc(o)} po</span>`:''}${j.pv!=null?chipsJ(j):''}`}</div>
+      <div class="hpj">${j.pv!=null&&!e.absent?hpJ(j):''}</div>
+      ${ouv?`<div class="tj-plus">${e.classe?`<div class="muted">${esc(e.classe)} niv ${esc(e.niveau||'?')} · vu ${esc(quand(e.vu_le))}</div>`:'<div class="muted">Pas encore de personnage relié.</div>'}
+        ${e.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(e.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(e.cle))}">Copier</button></div>`:''}
+        <button class="btn-s${e.absent?'':' on'}" data-a="presence" data-id="${id}" aria-pressed="${!e.absent}">${e.absent?'Absent · le remettre à la table':'À la table · le marquer absent'}</button></div>`:''}</div>`};
+  return `<h2>À la table</h2>${tri.map(carte).join('')||'<p class="muted">Aucun joueur.</p>'}
+    ${nouveauCode?`<p class="muted">Code créé : clique sur le joueur pour le voir et l’envoyer. Il l’entre dans son app, écran d’accueil, « Retrouver un personnage ».</p>`:''}
+    <div class="row code-row"><input id="jnom" placeholder="Nouveau joueur"><button data-a="ajoutJ">Ajouter</button></div>
+    <h2 style="margin-top:14px">Campagne</h2>
+    ${ui.edit?`<div class="row code-row"><input id="cnom" value="${esc(etat.campagne.nom)}" aria-label="Nom de la campagne"><button data-a="renommer">Renommer</button></div>`:''}
+    <div class="outils"><button class="btn-s" data-a="exporter">Télécharger l’export</button><button class="btn-s" data-a="majApp">Mettre à jour l’application</button>
+      ${ui.confSortir?`<button class="dgr btn-s" data-a="sortirOui">Oublier le code MJ ?</button><button class="btn-s" data-a="confNon">Annuler</button>`:`<button class="btn-s" data-a="sortir">Se déconnecter</button>`}</div>
+    <p class="muted" style="font-size:.8rem;margin:4px 0 0">Version du ${esc(VERSION)}.</p>`;
 }
 /* ---------- PNJ ----------
    Rangés par région. Losange plein = déjà rencontré par les joueurs (en clair sinon), ★ = PNJ principal (en tête de sa région).
@@ -632,11 +653,11 @@ document.addEventListener('keydown',ev=>{if(!pad)return;
 window.addEventListener('resize',()=>{if(pad&&!grand())padFermer()});
 /* ---------- 2e fenêtre sur ordinateur : PNJ | Archives | Journal ---------- */
 let col2Haut=false;
-const col2=()=>{const v=ui.col2;return ['pnj','archives','journal'].includes(v)?v:'pnj'};
-try{ui.col2=localStorage.getItem(KEY+'.col2')||'pnj'}catch(e){}
+const col2=()=>{const v=ui.col2;return ['rencontres','archives','journal'].includes(v)?v:'rencontres'};
+try{ui.col2=localStorage.getItem(KEY+'.col2')||'rencontres'}catch(e){}
 function col2Html(){const c=col2();
-  return `<nav class="tabs col2-tabs">${[['pnj','PNJ'],['archives','Archives'],['journal','Journal']].map(([k,l])=>`<button data-a="col2" data-o="${k}" aria-current="${c===k}">${l}</button>`).join('')}</nav>`
-    +({pnj:ongPnj,archives:ongArchives,journal:ongJournal})[c]()}
+  return `<nav class="tabs col2-tabs">${[['rencontres','Rencontres'],['archives','Archives'],['journal','Journal']].map(([k,l])=>`<button data-a="col2" data-o="${k}" aria-current="${c===k}">${l}</button>`).join('')}</nav>`
+    +({rencontres:ongRencontres,archives:ongArchives,journal:ongJournal})[c]()}
 
 /* ---------- Journal de campagne : une entrée par session ----------
    [{id, date (AAAA-MM-JJ), titre, texte}] ; texte : une ligne « Intitulé : … », des lignes « - … » pour les listes, « Note MJ : … » en rouge. */
@@ -731,6 +752,7 @@ function ongJoueurs(){
     :`<div class="jr"><div class="l1"><b>${esc(j.nom)}</b><span class="muted">vu ${esc(quand(j.vu_le))}</span></div>
       <div class="l2"><span>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(pvMaxJ(j))}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</span>${j.classe&&orJ(j)!=null?`<b class="or" title="Tout son argent converti en pièces d’or">${esc(orJ(j))} po</b>`:''}</div>
       ${j.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(j.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(j.cle))}">Copier</button></div>`:''}
+      <button class="btn-s${j.absent?'':' on'}" data-a="presence" data-id="${esc(j.id)}" aria-pressed="${!j.absent}" style="margin-top:4px">${j.absent?'Absent · le remettre à la table':'À la table'}</button>
       ${nouveauCode===j.id?'<p class="muted">Envoie ce code au joueur : il l’entre dans son app : écran d’accueil, « Retrouver un personnage » (ou onglet Fiche, « Sauvegarde en ligne », pour relier une fiche déjà importée).</p>':''}</div>`;
   return `<section><h2>Ajouter un joueur</h2><div class="row code-row"><input id="jnom" placeholder="Nom (joueur ou personnage)"><button data-a="ajoutJ">Ajouter</button></div></section>
     <section><h2>Joueurs</h2>${js.length?js.map(ligne).join(''):'<p class="muted">Aucun joueur. Ajoute-les ci-dessus.</p>'}</section>`;
@@ -917,7 +939,7 @@ function carteJ(s,j,sans){
 }
 /* ordre d'initiative : du plus grand au plus petit, joueurs d'abord à égalité ; sans initiative en dernier, grisés */
 function ordre(s,avecJoueurs){
-  const l=[...(avecJoueurs?live.filter(j=>j.pv!=null).map(j=>({k:'j:'+j.id,j})):[]),...s.monstres.map(m=>({k:'m:'+m.id,m}))]
+  const l=[...(avecJoueurs?live.filter(j=>j.pv!=null&&!absentJ(j.id)).map(j=>({k:'j:'+j.id,j})):[]),...s.monstres.map(m=>({k:'m:'+m.id,m}))]
     .map(x=>Object.assign(x,{v:vide(s.init[x.k])?null:num(s.init[x.k])}));
   const avec=l.filter(x=>x.v!=null).sort((a,b)=>b.v-a.v||(a.j?-1:0)-(b.j?-1:0));
   return [...avec,...l.filter(x=>x.v==null)];
@@ -1014,7 +1036,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&ui.hpOp){ui.hpOp=
 async function rLive(){
   try{const r=await rpc('mj_rencontres',{p_code:code});live=r.joueurs||[];
     live.forEach(j=>{const el=document.querySelector(`[data-jpv="${j.id}"]`);if(el)el.innerHTML=hpJ(j)});
-    const t=document.querySelector('.table-j');if(t)t.innerHTML=tableJ()}catch(e){}
+    const t=document.querySelector('.table-j');if(t&&!t.contains(document.activeElement))t.innerHTML=tableJ()}catch(e){}
 }
 setInterval(()=>{if(code&&charge&&((ui.onglet==='rencontres'&&renc.some(s=>s.combat))||grand())&&document.visibilityState!=='hidden')rLive()},4000);
 try{ui.ouvertes=JSON.parse(localStorage.getItem(KEY+'.ouvertes')||'{}')}catch(e){ui.ouvertes={}}
@@ -1028,7 +1050,7 @@ document.addEventListener('click',async ev=>{
   if(pnjClic(a,b))return;
   if(rClic(a,b))return;
   switch(a){
-    case 'onglet':{const i=ongl().findIndex(o=>o[0]===ui.onglet),j=ongl().findIndex(o=>o[0]===b.dataset.o);anim=j>i?'in-g':j<i?'in-d':''}ui.onglet=b.dataset.o;ui.envoi=null;ui.confRetirer=null;ui.confSortir=false;try{localStorage.setItem(KEY+'.onglet',ui.onglet)}catch(e){}render();window.scrollTo(0,0);return;
+    case 'onglet':{const i=ongl().findIndex(o=>o[0]===ui.onglet),j=ongl().findIndex(o=>o[0]===b.dataset.o);anim=grand()?'':j>i?'in-g':j<i?'in-d':''}ui.onglet=b.dataset.o;ui.envoi=null;ui.confRetirer=null;ui.confSortir=false;try{localStorage.setItem(KEY+'.onglet',ui.onglet)}catch(e){}render();window.scrollTo(0,0);return;
     case 'edit':ui.edit=!ui.edit;ui.confRetirer=null;ui.etatsM=null;ui.envoi=null;render();return;
     case 'initOui':ui.init=true;render();return;
     case 'initNon':ui.init=false;render();return;
@@ -1067,6 +1089,9 @@ document.addEventListener('click',async ev=>{
     case 'exporter':{try{const x=await rpc('mj_export',{p_code:code});telecharger(JSON.stringify(x,null,1),'export-'+(etat.campagne.nom||'campagne').replace(/[^\p{L}\p{N}]+/gu,'-')+'-'+new Date().toISOString().slice(0,10)+'.json');flash={t:'Export téléchargé.'}}catch(e){flash={err:1,t:erreur(e)}}render();return}
     case 'majApp':{b.textContent='Mise à jour…';b.disabled=true;try{localStorage.removeItem('dnd55.ref')}catch(e){}(self.caches?caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n)))):Promise.resolve()).catch(()=>{}).then(()=>Promise.all(['./','manifest.webmanifest'].map(u=>fetch(u,{cache:'reload'}).catch(()=>{})))).finally(()=>location.reload());return}
     case 'sortir':ui.confSortir=true;render();return;
+    case 'jOuvrir':ui.jOuv=ui.jOuv===b.dataset.id?null:b.dataset.id;render();return;
+    case 'presence':{const e=etat.joueurs.find(x=>x.id===b.dataset.id);if(!e)return;e.absent=!e.absent;render();
+      try{await rpc('mj_joueur_presence',{p_code:code,p_id:e.id,p_absent:e.absent})}catch(er){e.absent=!e.absent;flash={err:1,t:'Présence non enregistrée : '+erreur(er)};render()}return}
     case 'sortirOui':code='';charge=false;etat=null;ui.confSortir=false;try{localStorage.removeItem(KEY+'.code')}catch(e){}render();return;
   }
 });
