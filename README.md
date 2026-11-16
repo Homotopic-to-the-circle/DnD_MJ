@@ -144,3 +144,5 @@ Toucher le titre d'un document l'ouvre dans l'app (plus la visionneuse du naviga
 - **⤢** plein écran ; un document d'une seule page (carte…) s'ouvre directement en plein écran : zoom à la molette ou à deux doigts, déplacement en glissant, Échap pour fermer.
 - **↗** ouvre le fichier dans le navigateur, en secours. Un document déjà ouvert une fois se relit hors ligne.
 
+### Modifier un objet déjà envoyé
+Modifier le nom, la description ou le lien d'un objet du catalogue met aussi à jour, en direct, les exemplaires déjà envoyés : le joueur voit « Le MJ a modifié : … ». Objet mystérieux pas encore révélé : seul le texte visible change chez le joueur ; le vrai texte modifié est celui qui sera révélé.
