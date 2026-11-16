@@ -174,6 +174,10 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .arme .nom{font-weight:700;font-size:1.08rem}
 .arme .att{font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums lining-nums;color:var(--accent);text-align:right}
 .arme .deg{grid-column:1/-1}
+.jrn-j{border-bottom:1px solid var(--line)}.jrn-j:last-child{border-bottom:none}
+.jrn-j-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;height:auto;min-height:38px;padding:6px 0;border:none;background:transparent;text-align:left;font:inherit;color:var(--fg);font-weight:700}
+.jrn-j-t .muted{font-weight:normal;font-style:italic;font-size:.88rem;white-space:nowrap}
+.jrn-j-c{padding:0 0 8px}.jrn-j-c p{margin:4px 0}.jrn-j-c ul{margin:4px 0;padding-left:20px}
 .arme .mains{float:right;margin-left:8px;padding:2px 10px;font-size:.85rem}
 .arme-ed{display:grid;grid-template-columns:1fr 4.2rem auto;gap:6px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .arme-ed .full{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -292,6 +296,12 @@ html,body,*{scrollbar-width:none}
 .col2-tabs{margin-bottom:2px}
 .jrn-t{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .jrn-f{font-size:.98rem}.jrn-f p{margin:4px 0}.jrn-f ul{margin:4px 0;padding-left:20px}.jrn-f .note-mj{font-style:italic;color:var(--accent);font-size:.92rem}
+.jrn-secs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.jrn-sec{height:28px;padding:0 10px;font-size:.88rem;border:1px solid var(--line);border-radius:14px;background:transparent;color:var(--fg)}
+.jrn-sec.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.jrn-sec.mj{color:var(--accent);font-style:italic}
+.jrn-sec-c{margin-top:6px;padding:6px 10px;border-left:2px solid var(--line)}.jrn-sec-c>b{display:block;font-size:.9rem;color:var(--muted)}
+.jrn-sec-c.note-mj{border-left-color:var(--accent)}
 .jrn-ed{display:grid;grid-template-columns:10.5em minmax(0,1fr);gap:6px}.jrn-ed .full{grid-column:1/-1}
 .jrn-ed textarea{min-height:16em;font:inherit;font-size:.95rem;padding:6px}.jrn-ed input{height:34px;padding:0 8px;min-width:0}
 .pnj-rapide{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pnj-rapide .code-row{width:100%}
@@ -471,7 +481,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='17.11.2026 à 03:10';
+const VERSION='17.11.2026 à 03:25';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -784,8 +794,21 @@ function jrnSauver(){
     return rpc('mj_journal_sauver',{p_code:code,p_doc:JSON.parse(JSON.stringify(journal))});
   }).catch(e=>{flash={err:1,t:'Journal non enregistré : '+erreur(e)};renderDock()})}
 try{ui.jrnOuv=JSON.parse(localStorage.getItem(KEY+'.jrnOuv')||'{}')}catch(e){ui.jrnOuv={}}
+ui.jrnSec={};
 const jrnTri=()=>[...journal].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
 const dateFr=d=>{const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):''};
+/* affichage compact : le résumé en clair, les autres rubriques (Lieux, PNJ…) repliées derrière leur nom */
+function jrnBlocs(t){const b=[];let cur={lab:'',l:[]};b.push(cur);
+  for(const l0 of String(t||'').split('\n')){const l=l0.trim(),m=l.match(/^([^:\-•*][^:]{0,29}?)\s*:(?:\s+(.*))?$/);
+    if(m){cur={lab:m[1].trim(),l:m[2]?[m[2]]:[]};b.push(cur)}else cur.l.push(l0)}
+  return b.filter(x=>x.l.join('').trim())}
+function jrnCompact(x){
+  const B=jrnBlocs(x.texte),res=B.filter(b=>!b.lab||/^r[ée]sum[ée]$/i.test(b.lab)),aut=B.filter(b=>!res.includes(b));
+  const k=b=>x.id+':'+b.lab;
+  return res.map(b=>jrnHtml(b.l.join('\n'))).join('')
+    +(aut.length?`<div class="jrn-secs">${aut.map(b=>`<button class="jrn-sec${/^note/i.test(b.lab)?' mj':''}${ui.jrnSec[k(b)]?' on':''}" data-a="jrnSec" data-k="${esc(k(b))}" aria-expanded="${!!ui.jrnSec[k(b)]}">${esc(b.lab)}</button>`).join('')}</div>
+      ${aut.filter(b=>ui.jrnSec[k(b)]).map(b=>`<div class="jrn-sec-c${/^note/i.test(b.lab)?' note-mj':''}"><b>${esc(b.lab)}</b>${jrnHtml(b.l.join('\n'))}</div>`).join('')}`:'');
+}
 function jrnHtml(t){let h='',ul=false;const fin=()=>{if(ul){h+='</ul>';ul=false}};
   const L=String(t||'').split('\n').map(x=>x.trim());
   for(let i=0;i<L.length;i++){const l=L[i];
@@ -806,7 +829,7 @@ function ongJournal(){
           ?`<button class="dgr btn-s" data-a="jrnSupprOui" data-id="${id}">Supprimer cette entrée ?</button><button class="btn-s" data-a="confNon">Annuler</button>`
           :`<button class="btn-s" data-a="jrnSuppr" data-id="${id}">Supprimer</button>`}</div></div></section>`;
     return `<section><h2 class="h2b"><span data-a="jrnOuvrir" data-id="${id}">${esc(x.titre||'Sans titre')}<span class="nb">${esc(dateFr(x.date))}${o?'':' ▸'}</span></span></h2>
-      ${o?`<div class="jrn-f">${jrnHtml(x.texte)||'<p class="muted">Vide. Complète-le avec le crayon.</p>'}</div>`:''}</section>`};
+      ${o?`<div class="jrn-f">${jrnCompact(x)||'<p class="muted">Vide. Complète-le avec le crayon.</p>'}</div>`:''}</section>`};
   const nouv=`<section><h2>Nouvelle session</h2><div class="row code-row"><input id="jrnNouv" placeholder="Titre (ex. Session 1 : l’arrivée à Dal-Mor)"><button data-a="jrnAjout">Créer</button></div></section>`;
   return `${ui.edit||!l.length?nouv:`<div class="jrn-t"><p class="muted" style="margin:0">${l.length} session${l.length>1?'s':''}</p><button class="btn-s" data-a="jrnImprimer">Imprimer / PDF</button></div>`}
     ${l.map(ent).join('')||'<p class="muted">Aucune session pour l’instant. Crée la première, ou demande au Claude de ton projet d’ajouter le résumé.</p>'}`;
@@ -832,6 +855,7 @@ function jrnClic(a,b){
       const d=new Date(),iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       const id=rid();journal.push({id,date:iso,titre:n,texte:JRN_MODELE});ui.jrnOuv[id]=true;
       if(!ui.edit){ui.edit=true}jrnSauver();render();const t=document.querySelector(`[data-jk="texte"][data-id="${id}"]`);if(t){t.focus();t.setSelectionRange(10,10)}break}
+    case 'jrnSec':ui.jrnSec[b.dataset.k]=!ui.jrnSec[b.dataset.k];render();break;
     case 'jrnImprimer':jrnImprimer();break;
     case 'jrnSuppr':ui.confRetirer='jrn:'+b.dataset.id;render();break;
     case 'jrnSupprOui':jrnSuppr.add(b.dataset.id);journal=journal.filter(x=>x.id!==b.dataset.id);ui.confRetirer=null;jrnSauver();render();break;

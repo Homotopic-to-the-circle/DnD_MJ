@@ -146,3 +146,6 @@ Toucher le titre d'un document l'ouvre dans l'app (plus la visionneuse du naviga
 
 ### Modifier un objet déjà envoyé
 Modifier le nom, la description ou le lien d'un objet du catalogue met aussi à jour, en direct, les exemplaires déjà envoyés : le joueur voit « Le MJ a modifié : … ». Objet mystérieux pas encore révélé : seul le texte visible change chez le joueur ; le vrai texte modifié est celui qui sera révélé.
+
+### Journal : ce que voient les joueurs
+Dans le journal, le **Résumé** de chaque session s'affiche en clair ; Lieux, PNJ rencontrés, Butin, Fils ouverts et Note MJ sont repliés (un clic sur leur nom les ouvre). Les joueurs voient **uniquement les résumés**, dans leur onglet Fiche (« Journal de campagne », sessions repliées) : le reste ne quitte jamais le serveur.
