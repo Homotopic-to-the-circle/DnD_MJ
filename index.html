@@ -433,6 +433,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .part .nom a{color:inherit}
 .part .note{font-size:.88rem;font-style:italic;color:var(--muted);line-height:1.25}
 .part .chips{gap:4px}
+.part .l-nom{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.part .l-nom .chips{display:inline-flex}
 .part .chip{font-size:.78rem;padding:1px 7px}
 .hpm{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums lining-nums}
 .hpm button{width:30px;height:30px;padding:0;font-size:1.15rem;line-height:1}
@@ -481,7 +482,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
    Tout passe par des fonctions Supabase protégées par le code MJ (gardé sur cet appareil uniquement). */
 const SUPA='https://mgcofajllvellwcudjxx.supabase.co',CLE_PUB='sb_publishable_WLlUZ1Aznum4Rz1qwab53Q_xisC28pj';
 const KEY='dnd55.mj';
-const VERSION='17.11.2026 à 03:25';
+const VERSION='17.11.2026 à 06:58';
 const TYPES=[['objet','Objet'],['arme','Arme'],['armure','Armure'],['magique','Objet magique'],['potion','Potion'],['parchemin','Parchemin'],['lettre','Lettre'],['carte','Carte'],['autre','Autre']];
 const ONGLETS=[['rencontres','Rencontres'],['objets','Objets'],['envois','Envois'],['archives','Archives'],['campagne','Campagne']];
 const ONGLETS_TEL=[ONGLETS[0],['pnj','PNJ'],...ONGLETS.slice(1)];
@@ -1177,8 +1178,8 @@ function carteM(s,m,sans){
       <input class="full" data-mf="url" data-k2="${esc(s.id)}|${esc(m.id)}" value="${esc(m.url)}" placeholder="Lien AideDD" inputmode="url" aria-label="Lien AideDD"></div></div>`;
   const ouvert=ui.etatsM===m.id;
   return `<div class="card part ${sans?'sans':''} ${mKo(m)?'ko':''}">${iniIn(s,k)}
-    <div class="corps"><span class="nom">${m.url?`<a class="ext" href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nom)}</a>`:esc(m.nom)}</span>
-      ${m.note?`<span class="note">${esc(m.note)}</span>`:''}${chipsM(s,m)}</div>
+    <div class="corps"><div class="l-nom"><span class="nom">${m.url?`<a class="ext" href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nom)}</a>`:esc(m.nom)}</span>${chipsM(s,m)}</div>
+      ${m.note?`<span class="note">${esc(m.note)}</span>`:''}</div>
     ${ui.hpOp&&ui.hpOp.m===m.id?`<div class="hpm op"><span class="signe">${ui.hpOp.d<0?'−':'+'}</span><input data-op="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" placeholder="${ui.hpOp.d<0?'dégâts':'soins'}" aria-label="${ui.hpOp.d<0?'PV retirés':'PV ajoutés'}"><button class="pri" data-a="opOk">OK</button></div>`
     :`<div class="hpm"><button data-a="mpv" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-d="-1" aria-label="Retirer des PV">−</button>
       <span class="val"><input data-mpv="${esc(s.id)}|${esc(m.id)}" inputmode="numeric" value="${esc(m.pv)}" aria-label="PV de ${esc(m.nom)}"><span class="max">/ ${vide(m.pvMax)?'?':esc(m.pvMax)}</span></span>
