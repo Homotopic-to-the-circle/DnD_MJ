@@ -433,6 +433,7 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .part .nom a{color:inherit}
 .part .note{font-size:.88rem;font-style:italic;color:var(--muted);line-height:1.25}
 .part .chips{gap:4px}
+.ca-pp{display:flex;gap:10px;font-size:.86rem;color:var(--muted)}.ca-pp b{color:var(--fg);font-weight:700}
 .part .l-nom{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.part .l-nom .chips{display:inline-flex}
 .part .chip{font-size:.78rem;padding:1px 7px}
 .hpm{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums lining-nums}
@@ -570,7 +571,7 @@ function tableJ(){
         ?`<button class="dgr btn-s" data-a="retirerJOui" data-id="${id}">Retirer ?</button>`:`<button class="x" data-a="retirerJ" data-id="${id}" aria-label="Retirer ${esc(e.nom)}">✕</button>`}</div></div></div>`;
     return `<div class="card part tj${e.absent?' absent':''}${ouv?' ouvert':''}"><div class="corps" data-a="jOuvrir" data-id="${id}" role="button" aria-expanded="${ouv}">
         <span class="nom">${esc(e.perso||e.nom)}</span>${e.perso&&e.perso!==e.nom?`<span class="note">${esc(e.nom)}</span>`:''}
-        ${e.absent?'<span class="note">pas à la table</span>':`${o!=null?`<span class="note">${esc(o)} po</span>`:''}${j.pv!=null?chipsJ(j):''}`}</div>
+        ${e.absent?'<span class="note">pas à la table</span>':`${caPP(e)}${o!=null?`<span class="note">${esc(o)} po</span>`:''}${j.pv!=null?chipsJ(j):''}`}</div>
       <div class="hpj">${j.pv!=null&&!e.absent?hpJ(j):''}</div>
       ${ouv?`<div class="tj-plus">${e.classe?`<div class="muted">${esc(e.classe)} niv ${esc(e.niveau||'?')} · vu ${esc(quand(e.vu_le))}</div>`:'<div class="muted">Pas encore de personnage relié.</div>'}
         ${e.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(e.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(e.cle))}">Copier</button></div>`:''}
@@ -1025,6 +1026,7 @@ function ongJoueurs(){
         ?`<button class="dgr" data-a="retirerJOui" data-id="${esc(j.id)}">Retirer ?</button>`:`<button class="x" data-a="retirerJ" data-id="${esc(j.id)}" aria-label="Retirer ${esc(j.nom)}">✕</button>`}</div></div>`
     :`<div class="jr"><div class="l1"><b>${esc(j.nom)}</b><span class="muted">vu ${esc(quand(j.vu_le))}</span></div>
       <div class="l2"><span>${j.classe?`${esc(j.perso||'Sans nom')} · ${esc(j.classe||'')} niv ${esc(j.niveau||'?')} · PV ${esc(j.pv)}/${esc(pvMaxJ(j))}${num(j.harmonises)?` · <span class="harmo-mj">✦ ${esc(j.harmonises)}/3</span>`:''}`:'<span class="muted">Pas encore de personnage relié.</span>'}</span>${j.classe&&orJ(j)!=null?`<b class="or" title="Tout son argent converti en pièces d’or">${esc(orJ(j))} po</b>`:''}</div>
+      ${caPP(j)}
       ${j.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(j.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(j.cle))}">Copier</button></div>`:''}
       <button class="btn-s${j.absent?'':' on'}" data-a="presence" data-id="${esc(j.id)}" aria-pressed="${!j.absent}" style="margin-top:4px">${j.absent?'Absent · le remettre à la table':'À la table'}</button>
       ${nouveauCode===j.id?'<p class="muted">Envoie ce code au joueur : il l’entre dans son app : écran d’accueil, « Retrouver un personnage » (ou onglet Fiche, « Sauvegarde en ligne », pour relier une fiche déjà importée).</p>':''}</div>`;
@@ -1208,9 +1210,11 @@ function carteM(s,m,sans){
     <div class="panneau" style="${ouvert?'':'display:none'}">${ouvert?`<div class="etats"><button class="conc-b ${m.conc?'on':''}" data-a="concM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" aria-pressed="${!!m.conc}">Concentration</button>${ETATS.map(n=>`<button class="${m.etats[n]?'on':''}" data-a="etatM" data-s="${esc(s.id)}" data-m="${esc(m.id)}" data-n="${esc(n)}" aria-pressed="${!!m.etats[n]}">${esc(n)}</button>`).join('')}</div>`:''}</div>
 </div>`;
 }
+/* CA et perception passive du personnage (telles que sur sa fiche) */
+const caPP=e=>e&&(e.ca||e.pp)?`<span class="ca-pp">${e.ca?`<span title="Classe d’armure">CA <b>${esc(e.ca)}</b></span>`:''}${e.pp?`<span title="Perception passive">Perc. passive <b>${esc(e.pp)}</b></span>`:''}</span>`:'';
 function carteJ(s,j,sans){
   return `<div class="card part ${sans?'sans':''}">${iniIn(s,'j:'+j.id,j.init)}
-    <div class="corps"><span class="nom">${esc(j.perso||j.nom)}</span>${j.perso&&j.perso!==j.nom?`<span class="note">${esc(j.nom)}</span>`:''}${chipsJ(j)}</div>
+    <div class="corps"><span class="nom">${esc(j.perso||j.nom)}</span>${caPP((etat.joueurs||[]).find(x=>x.id===j.id))}${chipsJ(j)}</div>
     <div class="hpj" data-jpv="${esc(j.id)}">${hpJ(j)}</div></div>`;
 }
 /* ordre d'initiative : du plus grand au plus petit, joueurs d'abord à égalité ; sans initiative en dernier, grisés */
