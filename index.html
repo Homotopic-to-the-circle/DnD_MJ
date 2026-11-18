@@ -544,14 +544,16 @@ function rendu(){
   const tabs=ongl().map(([k,l])=>`<button data-a="onglet" data-o="${k}" aria-current="${ong===k}">${l}</button>`).join('');
   const corps={objets:ongObjets,envois:ongEnvois,rencontres:ongRencontres,archives:()=>ui.lecture&&lect&&lect.id===ui.lecture?ongArchives():'<h2 style="margin-bottom:-6px">Journal</h2>'+ongJournal()+ongArchives(),campagne:ongCampagne,pnj:ongPnj}[ong]||ongRencontres;
   const defil=c=>c.querySelector(':scope>.defile')||c;
-  const hauts=[...document.querySelectorAll('.mj-bureau>*')].map(c=>defil(c).scrollTop);
+  const hauts=[...document.querySelectorAll('.mj-bureau>*')].map(c=>defil(c).scrollTop),gauches=[...document.querySelectorAll('.mj-bureau>*')].map(c=>defil(c).scrollLeft);
+  const pageX=scrollX,pageY=scrollY;
   app.innerHTML=`<header class="top"><div class="row"><div class="titre"><h1>${esc(etat.campagne.nom)}</h1></div>
     <button data-a="edit" class="icone ${ui.edit?'on':''}" aria-pressed="${ui.edit}" aria-label="${ui.edit?'Terminer':'Modifier'}">${ui.edit
       ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
       :'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>'}</button></div>
     ${g?'':`<nav class="tabs">${tabs}</nav>`}</header>${g?`<div class="mj-bureau"><main><nav class="tabs">${tabs}</nav><div class="defile">${corps()}</div></main><aside class="pnj-col" aria-label="${({rencontres:'Rencontres',archives:'Archives',journal:'Journal'})[col2()]}">${col2Html()}</aside><aside class="table-j" aria-label="Joueurs à la table">${tableJ()}</aside></div>`:`<main class="${anim}">${corps()}</main>`}`;
   lecteurAttacher();
-  anim='';document.querySelectorAll('.mj-bureau>*').forEach((c,i)=>{defil(c).scrollTop=(i===0&&gaucheHaut)||(i===1&&col2Haut)?0:(hauts[i]||0)});col2Haut=false;gaucheHaut=false;
+  if(!g&&ui.lecture&&!anim)window.scrollTo(pageX,pageY);
+  anim='';document.querySelectorAll('.mj-bureau>*').forEach((c,i)=>{const z=(i===0&&gaucheHaut)||(i===1&&col2Haut);defil(c).scrollTop=z?0:(hauts[i]||0);defil(c).scrollLeft=z?0:(gauches[i]||0)});col2Haut=false;gaucheHaut=false;
   clavierOrdi();
   if(grand()){const t=document.querySelector('.top');if(t)document.documentElement.style.setProperty('--haut-top',(t.offsetHeight+12)+'px')}
 }
