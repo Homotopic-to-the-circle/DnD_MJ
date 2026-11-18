@@ -868,7 +868,7 @@ document.addEventListener('change',ev=>{const d=ev.target.dataset||{};if(!d.jk)r
   x[d.jk]=d.jk==='texte'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();jrnSauver();if(d.jk==='date')render()});
 /* ---------- Lecteur de documents intégré (PDF.js) ----------
    Les PDF des archives s'ouvrent dans l'app (pages sur le fond de l'app, recherche), pas dans la visionneuse du navigateur.
-   Document d'une page (carte…) : plein écran, zoom molette / deux doigts, déplacement en glissant. Copie gardée pour le hors ligne. */
+   Bouton ⤢ : plein écran, zoom molette / deux doigts, déplacement en glissant. Copie gardée pour le hors ligne. */
 /* faire défiler seulement la zone qui défile (.defile ou la page), jamais les colonnes elles-mêmes (scrollIntoView décale leurs onglets) */
 function montrer(el,mode){const sc=el.closest('.defile')||document.scrollingElement;const r=el.getBoundingClientRect(),z=sc===document.scrollingElement?{top:0,bottom:innerHeight,height:innerHeight}:sc.getBoundingClientRect();
   if(mode==='centre')sc.scrollTop+=r.top-z.top-(z.height-r.height)/2;else if(r.top<z.top)sc.scrollTop+=r.top-z.top-12;else if(r.bottom>z.bottom)sc.scrollTop+=r.bottom-z.bottom+12;
@@ -887,14 +887,13 @@ async function chargerPdfJs(){
 const estPdf=a=>a.type==='application/pdf'||/\.pdf($|\?)/i.test(a.url||'');
 async function lire(a){
   if(!estPdf(a)){if(/^image\//.test(a.type||''))ouvrirPlein(a,null);else window.open(a.url,'_blank','noopener');return}
-  if(lect&&lect.id===a.id&&lect.doc){if(lect.doc.numPages===1)ouvrirPlein(a,1);else{ui.lecture=a.id;col2Haut=true;render()}return}
+  if(lect&&lect.id===a.id&&lect.doc){ui.lecture=a.id;col2Haut=true;render();return}
   lect={id:a.id,titre:a.titre,url:a.url,doc:null,pages:[],textes:[],el:document.createElement('div'),res:[],ri:-1};
   lect.el.className='lect-pages';lect.el.innerHTML='<p class="muted">Ouverture du document…</p>';
   ui.lecture=a.id;ui.lectQ='';col2Haut=true;render();
   try{
     const lib=await chargerPdfJs(),buf=await (await enCache(a.url)).arrayBuffer();
     const doc=await lib.getDocument({data:buf}).promise;if(!lect||lect.id!==a.id)return;lect.doc=doc;
-    if(doc.numPages===1){ui.lecture=null;render();ouvrirPlein(a,1);return}
     lect.el.innerHTML='';
     for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i),v=pg.getViewport({scale:1}),d=document.createElement('div');
       d.className='lect-pg';d.style.aspectRatio=v.width+'/'+v.height;d.dataset.p=i;lect.el.appendChild(d);lect.pages.push({el:d,page:pg,v,fait:0})}
