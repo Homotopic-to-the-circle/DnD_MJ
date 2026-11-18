@@ -327,7 +327,7 @@ html,body,*{scrollbar-width:none}
 .ico{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:1.05rem;line-height:1;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:4px;text-decoration:none;cursor:pointer}
 .lect-fixe{flex:none;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .lect-cherche{margin-top:2px}.lect-cherche #lect-n{flex:none;font-size:.85rem;white-space:nowrap}
-.lect-pages{display:flex;flex-direction:column;gap:12px}
+.lect-pages{display:flex;flex-direction:column;gap:12px;touch-action:pan-x pan-y}
 .lect-pg{position:relative;width:100%;background:var(--card);box-shadow:0 1px 4px rgba(var(--ombre,42,28,18),.25)}
 .lect-pg canvas{display:block;width:100%;height:100%}
 .lect-hl{position:absolute;background:color-mix(in srgb,var(--accent) 22%,transparent);border-radius:2px;pointer-events:none}
@@ -933,9 +933,28 @@ function allerRes(k){
 function vueLecture(){return lectTete()+'<div id="lect-place"></div>'}
 function lectTete(){
   return `<div class="lect-tete"><button class="ico" data-a="lireFermer" title="Retour aux archives" aria-label="Retour aux archives">‹</button><b class="lect-t">${esc(lect.titre)}</b>
+      <button class="ico" data-a="lireZoom" data-z="-1" title="Dézoomer" aria-label="Dézoomer">−</button><button class="ico" data-a="lireZoom" data-z="1" title="Zoomer" aria-label="Zoomer">+</button>
       <button class="ico" data-a="lirePlein" title="Plein écran" aria-label="Plein écran">⤢</button><a class="ico" href="${esc(lect.url)}" target="_blank" rel="noopener" title="Ouvrir dans le navigateur" aria-label="Ouvrir dans le navigateur">↗</a></div>
     <div class="row code-row lect-cherche"><input type="search" id="lect-q" value="${esc(ui.lectQ||'')}" placeholder="Chercher dans le document" autocomplete="off"><span id="lect-n" class="muted"></span></div>`;
 }
+/* zoom dans la colonne : boutons − / +, Ctrl + molette (ou pincement du pavé tactile), deux doigts sur écran tactile */
+function lectZoom(z,cx,cy){
+  if(!lect||!lect.pages.length)return;const sc=lect.el.closest('.defile')||document.scrollingElement;
+  const av=lect.zoom||1;z=Math.min(4,Math.max(0.5,z));if(Math.abs(z-av)<0.001)return;
+  const r=sc.getBoundingClientRect(),px=(cx??r.left+r.width/2)-r.left,py=(cy??r.top+r.height/2)-r.top;
+  const fx=(sc.scrollLeft+px)/Math.max(1,sc.scrollWidth),fy=(sc.scrollTop+py)/Math.max(1,sc.scrollHeight);
+  lect.zoom=z;lect.el.style.width=z===1?'':(z*100)+'%';
+  sc.scrollLeft=fx*sc.scrollWidth-px;sc.scrollTop=fy*sc.scrollHeight-py;
+  clearTimeout(lect.zt);lect.zt=setTimeout(()=>{const vh=innerHeight;lect.pages.forEach((x,i)=>{const b=x.el.getBoundingClientRect();if(b.bottom>-900&&b.top<vh+900)rendrePage(i+1);else x.fait=0;surligner(i+1)})},220);
+}
+document.addEventListener('wheel',ev=>{if(!ev.ctrlKey||!lect||!ev.target.closest||!ev.target.closest('.lect-pages'))return;ev.preventDefault();
+  lectZoom((lect.zoom||1)*Math.exp(-ev.deltaY*0.0025),ev.clientX,ev.clientY)},{passive:false});
+const lectPts=new Map();
+document.addEventListener('pointerdown',ev=>{if(ev.pointerType==='touch'&&lect&&ev.target.closest&&ev.target.closest('.lect-pages'))lectPts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY})});
+document.addEventListener('pointermove',ev=>{if(!lectPts.has(ev.pointerId))return;const av=[...lectPts.values()].map(p=>({...p}));lectPts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(lectPts.size!==2)return;const ap=[...lectPts.values()],d=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+  lectZoom((lect.zoom||1)*d(ap)/Math.max(1,d(av)),(ap[0].x+ap[1].x)/2,(ap[0].y+ap[1].y)/2)});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,ev=>lectPts.delete(ev.pointerId)));
 function lecteurAttacher(){const p=document.getElementById('lect-place');if(p&&lect){p.replaceWith(lect.el);majCompteur()}}
 document.addEventListener('input',ev=>{if(ev.target.id==='lect-q')chercherDoc(ev.target.value)});
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='lect-q'&&lect){ev.preventDefault();allerRes(lect.ri+(ev.shiftKey?-1:1))}});
@@ -1302,6 +1321,7 @@ function telecharger(texte,nom){try{const a=document.createElement('a');a.href=U
 document.addEventListener('click',async ev=>{
   const b=ev.target.closest&&ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a==='lire'){const x=arch.find(y=>y.id===b.dataset.id);if(x)lire(x);return}
+  if(a==='lireZoom'){lectZoom((lect&&lect.zoom||1)*(b.dataset.z==='1'?1.25:0.8));return}
   if(a==='lireFermer'){ui.lecture=null;col2Haut=true;render();return}
   if(a==='lirePlein'){if(lect&&lect.doc){const top=lect.pages.find(x=>x.el.getBoundingClientRect().bottom>200);ouvrirPlein({titre:lect.titre,url:lect.url},top?+top.el.dataset.p:1)}return}
   if(jrnClic(a,b))return;
