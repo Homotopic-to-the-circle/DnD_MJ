@@ -178,6 +178,8 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .jrn-j-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;height:auto;min-height:38px;padding:6px 0;border:none;background:transparent;text-align:left;font:inherit;color:var(--fg);font-weight:700}
 .jrn-j-t .muted{font-weight:normal;font-style:italic;font-size:.88rem;white-space:nowrap}
 .jrn-j-c{padding:0 0 8px}.jrn-j-c p{margin:4px 0}.jrn-j-c ul{margin:4px 0;padding-left:20px}
+.pnj-j{padding:6px 0;border-top:1px solid var(--line);font-size:.95rem}.pnj-j:first-child{border-top:none}.pnj-j-n .muted{font-style:italic;font-size:.88rem}
+.pnj-j-c{padding-left:12px;position:relative}.pnj-j-c::before{content:'–';position:absolute;left:0;color:var(--muted)}.pnj-j-c.ok{text-decoration:line-through;color:var(--muted)}
 .arme .mains{float:right;margin-left:8px;padding:2px 10px;font-size:.85rem}
 .arme-ed{display:grid;grid-template-columns:1fr 4.2rem auto;gap:6px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .arme-ed .full{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -355,6 +357,9 @@ html,body,*{scrollbar-width:none}
 .pnj-f{padding:4px 0 6px 30px;font-size:.95rem}
 .pnj-f p{margin:3px 0}
 .pnj-f .note-mj{font-style:italic;color:var(--accent);font-size:.9rem}
+.pnj-pub{margin:8px 0 2px;padding:6px 10px;border-left:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent)}.pnj-pub.cache{opacity:.6}
+.pnj-pub-t{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:2px}
+.pnj-pub-ed{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.pnj-pub-ed .full,.pnj-pub-ed .pnj-pub-t{grid-column:1/-1}.pnj-pub-ed textarea.court{min-height:5em}
 .pnj-act{justify-content:flex-start;padding-left:30px;flex-wrap:wrap}
 .pnj-ed{display:grid;grid-template-columns:minmax(0,1fr) 4.5em;gap:6px;padding:4px 0 8px 30px}
 .pnj-ed .full{grid-column:1/-1}
@@ -609,7 +614,8 @@ function pnjSauver(){
     if(srv){const ids=new Set(pnj.liste.map(x=>x.id)),rids=new Set(pnj.regions.map(x=>x.id));let plus=false;
       (srv.regions||[]).forEach(r=>{if(!rids.has(r.id)&&!pnjSuppr.has(r.id)){pnj.regions.push(r);plus=true}});
       (srv.noms||[]).forEach(x=>{if(!pnj.noms.some(y=>y.id===x.id)&&!pnjSuppr.has(x.id)){pnj.noms.push(x);plus=true}});
-      (srv.liste||[]).forEach(x=>{if(!ids.has(x.id)&&!pnjSuppr.has(x.id)&&!pnjSuppr.has(x.region)){pnj.liste.push(x);plus=true}});
+      (srv.liste||[]).forEach(x=>{if(!ids.has(x.id)&&!pnjSuppr.has(x.id)&&!pnjSuppr.has(x.region)){pnj.liste.push(x);plus=true}
+        else if(x.pub){const y=pnj.liste.find(z=>z.id===x.id);if(y&&!y.pub){y.pub=x.pub;plus=true}}});
       if(plus&&!saisieEnCours())render()}
     return rpc('mj_pnj_sauver',{p_code:code,p_doc:JSON.parse(JSON.stringify(pnj))});
   }).catch(e=>{flash={err:1,t:'PNJ non enregistrés : '+erreur(e)};renderDock()})}
@@ -637,10 +643,11 @@ function pnjCorps(){
           <input class="full" data-pk="titre" data-id="${esc(p.id)}" value="${esc(p.titre||'')}" placeholder="Rôle (ex. le tavernier)" aria-label="Rôle">
           <select class="full" data-pk="region" data-id="${esc(p.id)}" aria-label="Région">${pnj.regions.map(r=>`<option value="${esc(r.id)}"${r.id===p.region?' selected':''}>${esc(r.nom)}</option>`).join('')}</select>
           <textarea class="full" data-pk="fiche" data-id="${esc(p.id)}" placeholder="Une ligne par point, ex.&#10;Veut : …&#10;Physique : …&#10;Note MJ : …" aria-label="Fiche">${esc(p.fiche||PNJ_MODELE)}</textarea>
+          ${pubEd(p)}
           <div class="full row" style="justify-content:end">${ui.confRetirer==='pnj:'+p.id
             ?`<span class="row"><button class="dgr btn-s" data-a="pnjSupprOui" data-id="${esc(p.id)}">Supprimer ${esc(p.nom)} ?</button><button class="btn-s" data-a="confNon">Annuler</button></span>`
             :`<button class="btn-s" data-a="pnjSuppr" data-id="${esc(p.id)}">Supprimer</button>`}</div></div>`
-        :`<div class="pnj-f">${ficheHtml(p.fiche)||'<p class="muted">Pas de fiche. Ajoute-la avec le crayon.</p>'}</div>
+        :`<div class="pnj-f">${ficheHtml(p.fiche)||'<p class="muted">Pas de fiche. Ajoute-la avec le crayon.</p>'}${pubHtml(p)}</div>
 `}</div>`};
   const bloc=r=>{
     const tous=pnj.liste.filter(p=>p.region===r.id),l=tous.filter(ok).sort((a,b)=>(b.principal?1:0)-(a.principal?1:0));
@@ -689,7 +696,8 @@ function pnjClic(a,b){
     case 'pnjRecharger':chargerPnj().then(render);break;
     case 'pnjReg':ui.pnjFerme[b.dataset.r]=!ui.pnjFerme[b.dataset.r];pnjMem();render();break;
     case 'pnjOuvrir':if(p){ui.pnjOuv[p.id]=!ui.pnjOuv[p.id];pnjMem();render()}break;
-    case 'pnjVu':if(p){p.vu=!p.vu;pnjSauver();render()}break;
+    case 'pnjVu':if(p){p.vu=!p.vu;if(p.vu)pubInit(p);pnjSauver();render()}break;
+    case 'pnjCtx':if(p&&p.pub){const L=String(p.pub.contexte||'').split('\n'),n=+b.dataset.n;if(L[n]!=null){L[n]=/^\s*\[[xX]\]/.test(L[n])?L[n].replace(/^\s*\[[xX]\]\s*/,''):'[x] '+L[n].replace(/^\s*\[ ?\]\s*/,'');p.pub.contexte=L.join('\n');pnjSauver();render()}}break;
     case 'pnjPrinc':if(p){p.principal=!p.principal;pnjSauver();render()}break;
     case 'pnjAjout':{const i=document.querySelector(`[data-pnjnouv="${b.dataset.r}"]`),n=i&&i.value.trim();if(!n){flash={err:1,t:'Indique un nom.'};renderDock();break}
       const id=rid();pnj.liste.unshift({id,nom:n,titre:'',num:'',region:b.dataset.r,principal:false,vu:false,fiche:PNJ_MODELE});ui.pnjOuv[id]=true;pnjMem();pnjSauver();render();
@@ -728,10 +736,30 @@ function pnjClic(a,b){
 document.addEventListener('input',ev=>{if(ev.target.id==='pnjq'){ui.pnjQ=ev.target.value;const c=document.getElementById('pnj-corps');if(c)c.innerHTML=pnjCorps()}});
 document.addEventListener('change',ev=>{const d=ev.target.dataset||{};
   if(d.pnjreg){const r=pnj.regions.find(x=>x.id===d.pnjreg),v=ev.target.value.trim();if(r&&v){r.nom=v;pnjSauver()}return}
+  if(d.pub){const p=pnj.liste.find(x=>x.id===d.id);if(!p)return;pubInit(p);p.pub[d.pub]=d.pub==='contexte'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();pnjSauver();return}
   if(!d.pk)return;const p=pnj.liste.find(x=>x.id===d.id);if(!p)return;
   const v=d.pk==='fiche'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();if(d.pk==='nom'&&!v)return;
   p[d.pk]=v;pnjSauver();if(d.pk==='region')render();
 });
+/* ---------- Ce que savent les joueurs (bloc public d'un PNJ) ----------
+   p.pub = {nom, role, physique, vetement, lieu, contexte, depuis} ; envoyé aux joueurs (j_pnj) seulement si le PNJ est coché « rencontré ».
+   Contexte : une ligne par info ; « [x] » devant = réglé (barré chez les joueurs). Le reste de la fiche ne quitte jamais l'app MJ. */
+function pubInit(p){if(!p.pub){const f=k=>{const m=String(p.fiche||'').match(new RegExp('^\\s*'+k+'\\s*:\\s*(.+)$','im'));return m?m[1].trim():''};
+    p.pub={nom:p.nom,role:p.titre||'',physique:f('physique'),vetement:f('v[êe]tements?'),lieu:'',contexte:''}}
+  if(!p.pub.depuis)p.pub.depuis=new Date().toISOString()}
+const pubLignes=t=>String(t||'').split('\n').map((l,i)=>({i,ok:/^\s*\[[xX]\]/.test(l),t:l.replace(/^\s*\[[ xX]?\]\s*/,'').trim()})).filter(x=>x.t);
+function pubHtml(p){const u=p.pub;if(!u)return p.vu?'':'';
+  const l=(k,v)=>v?`<p><b>${k} :</b> ${esc(v)}</p>`:'';
+  return `<div class="pnj-pub${p.vu?'':' cache'}"><div class="pnj-pub-t">${p.vu?'Chez les joueurs':'Chez les joueurs une fois rencontré'}</div>
+    <p><b>${esc(u.nom||p.nom)}</b>${u.role?` <span class="pnj-t">${esc(u.role)}</span>`:''}</p>${l('Physique',u.physique)}${l('Vêtements',u.vetement)}${l('Rencontré',u.lieu)}
+    ${pubLignes(u.contexte).map(x=>`<p class="li-cc${x.ok?' on':''}"><button class="box${x.ok?' on':''}" data-a="pnjCtx" data-id="${esc(p.id)}" data-n="${x.i}" aria-pressed="${x.ok}" title="${x.ok?'Réglé':'Marquer comme réglé'}" aria-label="Réglé"></button><span>${esc(x.t)}</span></p>`).join('')}</div>`}
+function pubEd(p){const u=p.pub||{},i=(k,ph,lab)=>`<input class="full" data-pub="${k}" data-id="${esc(p.id)}" value="${esc(u[k]||'')}" placeholder="${ph}" aria-label="${lab}"${k==='lieu'?' list="lieux-noms"':''}>`;
+  const noms=[...new Set([...lieux.groupes.map(g=>g.nom),...lieux.liste.map(x=>{const g=lieux.groupes.find(y=>y.id===x.groupe);return x.nom+(g?', '+g.nom:'')})])];
+  return `<div class="full pnj-pub-ed"><div class="pnj-pub-t">Ce que savent les joueurs${p.vu?'':' (visible une fois rencontré)'}</div>
+    <input data-pub="nom" data-id="${esc(p.id)}" value="${esc(u.nom||'')}" placeholder="Nom connu (${esc(p.nom)})" aria-label="Nom connu des joueurs"><input data-pub="role" data-id="${esc(p.id)}" value="${esc(u.role||'')}" placeholder="Rôle connu" aria-label="Rôle connu des joueurs">
+    ${i('physique','Physique','Physique')}${i('vetement','Vêtements','Vêtements')}${i('lieu','Où ils l’ont rencontré','Lieu de la rencontre')}
+    <datalist id="lieux-noms">${noms.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+    <textarea class="full court" data-pub="contexte" data-id="${esc(p.id)}" placeholder="Contexte, une ligne par info&#10;[x] devant = réglé (barré)" aria-label="Contexte">${esc(u.contexte||'')}</textarea></div>`}
 /* ---------- Lieux : comme les fiches de session (PDF) ----------
    {groupes:[{id,num,nom,titre,fiche,fin}], liste:[{id,groupe,nom,titre,vu,fiche}]}
    Un lieu principal (n° de carte) : « Début fort », « Conditions » en tête, « Cliffhangers », « Pendant ce temps » en fin ; ses sous-lieux au milieu.
