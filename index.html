@@ -178,7 +178,7 @@ main.ed .cpt button{width:34px;height:34px;padding:0;font-size:1.2rem}
 .jrn-j-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;height:auto;min-height:38px;padding:6px 0;border:none;background:transparent;text-align:left;font:inherit;color:var(--fg);font-weight:700}
 .jrn-j-t .muted{font-weight:normal;font-style:italic;font-size:.88rem;white-space:nowrap}
 .jrn-j-c{padding:0 0 8px}.jrn-j-c p{margin:4px 0}.jrn-j-c ul{margin:4px 0;padding-left:20px}
-.pnj-j{padding:6px 0;border-top:1px solid var(--line);font-size:.95rem}.pnj-j:first-child{border-top:none}.pnj-j-n .muted{font-style:italic;font-size:.88rem}.pnj-j-n{display:block;width:100%;height:auto;min-height:0;padding:0;border:none;background:transparent;text-align:left;font:inherit;color:var(--fg);cursor:pointer}.pnj-j.replie{padding:4px 0}
+.pnj-j{padding:6px 0;border-top:1px solid var(--line);font-size:.95rem}.pnj-j:first-child{border-top:none}.pnj-j-n .muted{font-style:italic;font-size:.88rem}.pnj-j-n{display:block;width:100%;height:auto;min-height:0;padding:0;border:none;background:transparent;text-align:left;font:inherit;color:var(--fg);cursor:pointer}.pnj-j.replie{padding:4px 0}.pnj-j-p{margin:2px 0}
 .pnj-j-c{padding-left:12px;position:relative}.pnj-j-c::before{content:'–';position:absolute;left:0;color:var(--muted)}.pnj-j-c.ok{text-decoration:line-through;color:var(--muted)}
 .arme .mains{float:right;margin-left:8px;padding:2px 10px;font-size:.85rem}
 .arme-ed{display:grid;grid-template-columns:1fr 4.2rem auto;gap:6px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
@@ -740,7 +740,7 @@ function pnjClic(a,b){
 document.addEventListener('input',ev=>{if(ev.target.id==='pnjq'){ui.pnjQ=ev.target.value;const c=document.getElementById('pnj-corps');if(c)c.innerHTML=pnjCorps()}});
 document.addEventListener('change',ev=>{const d=ev.target.dataset||{};
   if(d.pnjreg){const r=pnj.regions.find(x=>x.id===d.pnjreg),v=ev.target.value.trim();if(r&&v){r.nom=v;pnjSauver()}return}
-  if(d.pub){const p=pnj.liste.find(x=>x.id===d.id);if(!p)return;pubInit(p);p.pub[d.pub]=d.pub==='contexte'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();pnjSauver();return}
+  if(d.pub){const p=pnj.liste.find(x=>x.id===d.id);if(!p)return;pubInit(p);p.pub[d.pub]=/^(contexte|phrase)$/.test(d.pub)?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();pnjSauver();return}
   if(!d.pk)return;const p=pnj.liste.find(x=>x.id===d.id);if(!p)return;
   const v=d.pk==='fiche'?ev.target.value.replace(/\s+$/,''):ev.target.value.trim();if(d.pk==='nom'&&!v)return;
   p[d.pk]=v;pnjSauver();if(d.pk==='region')render();
@@ -748,24 +748,21 @@ document.addEventListener('change',ev=>{const d=ev.target.dataset||{};
 /* ---------- Ce que savent les joueurs (bloc public d'un PNJ) ----------
    p.pub = {nom, role, physique, vetement, lieu, contexte, depuis} ; envoyé aux joueurs (j_pnj) seulement si le PNJ est coché « rencontré ».
    Contexte : une ligne par info ; « [x] » devant = réglé (barré chez les joueurs). Le reste de la fiche ne quitte jamais l'app MJ. */
-function pubInit(p){if(!p.pub){const f=k=>{const m=String(p.fiche||'').match(new RegExp('^\\s*'+k+'\\s*:\\s*(.+)$','im'));return m?m[1].trim():''};
-    p.pub={nom:p.nom,role:p.titre||'',physique:f('physique'),vetement:f('v[êe]tements?'),lieu:'',contexte:''}}
+function pubInit(p){if(!p.pub)p.pub={nom:p.nom,role:p.titre||'',phrase:'',contexte:''};
   if(!p.pub.depuis)p.pub.depuis=new Date().toISOString()}
 const pubLignes=t=>String(t||'').split('\n').map((l,i)=>({i,ok:/^\s*\[[xX]\]/.test(l),t:l.replace(/^\s*\[[ xX]?\]\s*/,'').trim()})).filter(x=>x.t);
-function pubHtml(p){const u=p.pub;if(!u)return p.vu?'':'';
-  const l=(k,v)=>v?`<p><b>${k} :</b> ${esc(v)}</p>`:'',o=(ui.pubOuv||{})[p.id];
+function pubHtml(p){const u=p.pub;if(!u)return '';
+  const o=(ui.pubOuv||{})[p.id];
   const t=`<button class="pnj-pub-t" data-a="pnjPubOuv" data-id="${esc(p.id)}" aria-expanded="${!!o}">${p.vu?'Chez les joueurs':'Chez les joueurs une fois rencontré'} ${o?'▾':'▸'}</button>`;
   if(!o)return `<div class="pnj-pub ferme${p.vu?'':' cache'}">${t}</div>`;
   return `<div class="pnj-pub${p.vu?'':' cache'}">${t}
-    <p><b>${esc(u.nom||p.nom)}</b>${u.role?` <span class="pnj-t">${esc(u.role)}</span>`:''}</p>${l('Physique',u.physique)}${l('Vêtements',u.vetement)}${l('Rencontré',u.lieu)}
+    <p><b>${esc(u.nom||p.nom)}</b>${u.role?` <span class="pnj-t">${esc(u.role)}</span>`:''}</p>${u.phrase?`<p>${esc(u.phrase)}</p>`:'<p class="muted">Pas encore de phrase pour les joueurs.</p>'}
     ${pubLignes(u.contexte).map(x=>`<p class="li-cc${x.ok?' on':''}"><button class="box${x.ok?' on':''}" data-a="pnjCtx" data-id="${esc(p.id)}" data-n="${x.i}" aria-pressed="${x.ok}" title="${x.ok?'Réglé':'Marquer comme réglé'}" aria-label="Réglé"></button><span>${esc(x.t)}</span></p>`).join('')}</div>`}
-function pubEd(p){const u=p.pub||{},i=(k,ph,lab)=>`<input class="full" data-pub="${k}" data-id="${esc(p.id)}" value="${esc(u[k]||'')}" placeholder="${ph}" aria-label="${lab}"${k==='lieu'?' list="lieux-noms"':''}>`;
-  const noms=[...new Set([...lieux.groupes.map(g=>g.nom),...lieux.liste.map(x=>{const g=lieux.groupes.find(y=>y.id===x.groupe);return x.nom+(g?', '+g.nom:'')})])];
+function pubEd(p){const u=p.pub||{};
   return `<div class="full pnj-pub-ed"><div class="pnj-pub-t">Ce que savent les joueurs${p.vu?'':' (visible une fois rencontré)'}</div>
     <input data-pub="nom" data-id="${esc(p.id)}" value="${esc(u.nom||'')}" placeholder="Nom connu (${esc(p.nom)})" aria-label="Nom connu des joueurs"><input data-pub="role" data-id="${esc(p.id)}" value="${esc(u.role||'')}" placeholder="Rôle connu" aria-label="Rôle connu des joueurs">
-    ${i('physique','Physique','Physique')}${i('vetement','Vêtements','Vêtements')}${i('lieu','Où ils l’ont rencontré','Lieu de la rencontre')}
-    <datalist id="lieux-noms">${noms.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
-    <textarea class="full court" data-pub="contexte" data-id="${esc(p.id)}" placeholder="Contexte, une ligne par info&#10;[x] devant = réglé (barré)" aria-label="Contexte">${esc(u.contexte||'')}</textarea></div>`}
+    <textarea class="full court" data-pub="phrase" data-id="${esc(p.id)}" placeholder="Une phrase pour s’en souvenir (où, quand, ce qui s’est passé)" aria-label="Phrase pour les joueurs">${esc(u.phrase||'')}</textarea>
+    <textarea class="full court" data-pub="contexte" data-id="${esc(p.id)}" placeholder="Fils à suivre (facultatif), une ligne chacun&#10;[x] devant = réglé (barré)" aria-label="Fils à suivre">${esc(u.contexte||'')}</textarea></div>`}
 /* ---------- Lieux : comme les fiches de session (PDF) ----------
    {groupes:[{id,num,nom,titre,fiche,fin}], liste:[{id,groupe,nom,titre,vu,fiche}]}
    Un lieu principal (n° de carte) : « Début fort », « Conditions » en tête, « Cliffhangers », « Pendant ce temps » en fin ; ses sous-lieux au milieu.
