@@ -358,6 +358,7 @@ html,body,*{scrollbar-width:none}
 .pnj-f p{margin:3px 0}
 .pnj-f .note-mj{font-style:italic;color:var(--accent);font-size:.9rem}
 .pnj-pub{margin:8px 0 2px;padding:6px 10px;border-left:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent)}.pnj-pub.cache{opacity:.6}
+.pnj-pub.ferme{background:none;padding:0 10px;border-left-color:var(--line)}button.pnj-pub-t{display:block;height:auto;min-height:0;padding:2px 0;border:none;background:transparent;cursor:pointer;font-family:inherit;text-align:left}
 .pnj-pub-t{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:2px}
 .pnj-pub-ed{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.pnj-pub-ed .full,.pnj-pub-ed .pnj-pub-t{grid-column:1/-1}.pnj-pub-ed textarea.court{min-height:5em}
 .pnj-act{justify-content:flex-start;padding-left:30px;flex-wrap:wrap}
@@ -697,6 +698,7 @@ function pnjClic(a,b){
     case 'pnjReg':ui.pnjFerme[b.dataset.r]=!ui.pnjFerme[b.dataset.r];pnjMem();render();break;
     case 'pnjOuvrir':if(p){ui.pnjOuv[p.id]=!ui.pnjOuv[p.id];pnjMem();render()}break;
     case 'pnjVu':if(p){p.vu=!p.vu;if(p.vu)pubInit(p);pnjSauver();render()}break;
+    case 'pnjPubOuv':ui.pubOuv=ui.pubOuv||{};ui.pubOuv[b.dataset.id]=!ui.pubOuv[b.dataset.id];render();break;
     case 'pnjCtx':if(p&&p.pub){const L=String(p.pub.contexte||'').split('\n'),n=+b.dataset.n;if(L[n]!=null){L[n]=/^\s*\[[xX]\]/.test(L[n])?L[n].replace(/^\s*\[[xX]\]\s*/,''):'[x] '+L[n].replace(/^\s*\[ ?\]\s*/,'');p.pub.contexte=L.join('\n');pnjSauver();render()}}break;
     case 'pnjPrinc':if(p){p.principal=!p.principal;pnjSauver();render()}break;
     case 'pnjAjout':{const i=document.querySelector(`[data-pnjnouv="${b.dataset.r}"]`),n=i&&i.value.trim();if(!n){flash={err:1,t:'Indique un nom.'};renderDock();break}
@@ -749,8 +751,10 @@ function pubInit(p){if(!p.pub){const f=k=>{const m=String(p.fiche||'').match(new
   if(!p.pub.depuis)p.pub.depuis=new Date().toISOString()}
 const pubLignes=t=>String(t||'').split('\n').map((l,i)=>({i,ok:/^\s*\[[xX]\]/.test(l),t:l.replace(/^\s*\[[ xX]?\]\s*/,'').trim()})).filter(x=>x.t);
 function pubHtml(p){const u=p.pub;if(!u)return p.vu?'':'';
-  const l=(k,v)=>v?`<p><b>${k} :</b> ${esc(v)}</p>`:'';
-  return `<div class="pnj-pub${p.vu?'':' cache'}"><div class="pnj-pub-t">${p.vu?'Chez les joueurs':'Chez les joueurs une fois rencontré'}</div>
+  const l=(k,v)=>v?`<p><b>${k} :</b> ${esc(v)}</p>`:'',o=(ui.pubOuv||{})[p.id];
+  const t=`<button class="pnj-pub-t" data-a="pnjPubOuv" data-id="${esc(p.id)}" aria-expanded="${!!o}">${p.vu?'Chez les joueurs':'Chez les joueurs une fois rencontré'} ${o?'▾':'▸'}</button>`;
+  if(!o)return `<div class="pnj-pub ferme${p.vu?'':' cache'}">${t}</div>`;
+  return `<div class="pnj-pub${p.vu?'':' cache'}">${t}
     <p><b>${esc(u.nom||p.nom)}</b>${u.role?` <span class="pnj-t">${esc(u.role)}</span>`:''}</p>${l('Physique',u.physique)}${l('Vêtements',u.vetement)}${l('Rencontré',u.lieu)}
     ${pubLignes(u.contexte).map(x=>`<p class="li-cc${x.ok?' on':''}"><button class="box${x.ok?' on':''}" data-a="pnjCtx" data-id="${esc(p.id)}" data-n="${x.i}" aria-pressed="${x.ok}" title="${x.ok?'Réglé':'Marquer comme réglé'}" aria-label="Réglé"></button><span>${esc(x.t)}</span></p>`).join('')}</div>`}
 function pubEd(p){const u=p.pub||{},i=(k,ph,lab)=>`<input class="full" data-pub="${k}" data-id="${esc(p.id)}" value="${esc(u[k]||'')}" placeholder="${ph}" aria-label="${lab}"${k==='lieu'?' list="lieux-noms"':''}>`;
