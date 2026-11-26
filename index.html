@@ -238,6 +238,9 @@ ul.plain li{padding:5px 0;border-bottom:1px solid var(--line);min-height:40px;di
 .alerte.trouve{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}.alerte .row{flex-wrap:nowrap;gap:6px}
 .qte{display:flex;align-items:center;gap:6px;flex:none}
 .qte button{padding:0;width:30px;height:30px;line-height:1;font-size:1.1rem}
+.objet .obj-n{flex:1;min-width:0}.don-o{flex:none;padding:0;width:30px;height:30px;line-height:1;font-size:1rem;color:var(--muted)}.don-o.on{color:var(--on-accent)}
+.don-f{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0 8px}.don-f select{flex:2;min-width:8em;height:40px;padding:0 8px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;font:inherit}.don-f input{flex:1;min-width:6em}.don-f p{flex-basis:100%;margin:0}
+.obj-mj{align-self:center;min-width:0}
 .qte b{min-width:2.2ch;text-align:center;font-variant-numeric:tabular-nums lining-nums}
 .obj-ed{display:grid;grid-template-columns:3.4rem 1fr auto;gap:6px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
 .obj-ed input{padding:4px 6px}
@@ -462,6 +465,10 @@ select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(
 .part .nom a{color:inherit}
 .part .note{font-size:.88rem;font-style:italic;color:var(--muted);line-height:1.25}
 .part .chips{gap:4px}
+.inv{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
+.inv-t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.92rem;color:var(--muted)}.inv-t b{color:var(--fg)}
+.inv-o{border-bottom:1px dashed var(--line);padding:3px 0}.inv-l{display:flex;justify-content:space-between;align-items:center;gap:8px}.inv-o .d{font-size:.88rem;color:var(--muted)}
+.inv-ed{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.inv-ed input{flex:1;min-width:6em}.inv-ed .full{flex-basis:100%}.inv-cat{margin:4px 0}
 .ca-pp{display:flex;gap:10px;font-size:.86rem;color:var(--muted)}.ca-pp b{color:var(--fg);font-weight:700}
 .part .l-nom{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.part .l-nom .chips{display:inline-flex}
 .part .chip{font-size:.78rem;padding:1px 7px}
@@ -606,7 +613,7 @@ function tableJ(){
       <div class="hpj">${j.pv!=null&&!e.absent?hpJ(j):''}</div>
       ${ouv?`<div class="tj-plus">${e.classe?`<div class="muted">${esc(e.classe)} niv ${esc(e.niveau||'?')} · vu ${esc(quand(e.vu_le))}</div>`:'<div class="muted">Pas encore de personnage relié.</div>'}
         ${e.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(e.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(e.cle))}">Copier</button></div>`:''}
-        <button class="btn-s${e.absent?'':' on'}" data-a="presence" data-id="${id}" aria-pressed="${!e.absent}">${e.absent?'Absent · le remettre à la table':'À la table · le marquer absent'}</button></div>`:''}</div>`};
+        <button class="btn-s${e.absent?'':' on'}" data-a="presence" data-id="${id}" aria-pressed="${!e.absent}">${e.absent?'Absent · le remettre à la table':'À la table · le marquer absent'}</button>${invJ(e)}</div>`:''}</div>`};
   return `<h2>À la table</h2>${tri.map(carte).join('')||'<p class="muted">Aucun joueur.</p>'}
     ${nouveauCode?`<p class="muted">Code créé : clique sur le joueur pour le voir et l’envoyer. Il l’entre dans son app, écran d’accueil, « Retrouver un personnage ».</p>`:''}
     <div class="row code-row"><input id="jnom" placeholder="Nouveau joueur"><button data-a="ajoutJ">Ajouter</button></div>
@@ -616,6 +623,41 @@ function tableJ(){
       ${ui.confSortir?`<span>Oublier le code MJ sur cet appareil ? <button data-a="sortirOui">Oui</button> · <button data-a="confNon">Non</button></span>`:`<button data-a="sortir">Se déconnecter</button>`}
       <span class="muted">Version du ${esc(VERSION)}</span></div>`;
 }
+/* ---------- Sac et bourse d'un joueur (vus depuis sa fiche synchronisée) ----------
+   Objet venu du catalogue : on le modifie dans le catalogue (suit en direct chez tous ceux qui l'ont).
+   Objet du joueur : correction envoyée à son app (nom, quantité, description ; 0 = retiré). Pièces : ajout / retrait en po. */
+function invJ(e){const inv=e.inv||[],id=esc(e.id),poOuv=ui.jPo===e.id;
+  const ligne=o=>{const k=e.id+':'+(o.uid||''),ed=ui.invEd===k,cat=o.objet_id&&etat.objets.find(x=>x.id===o.objet_id),cOuv=cat&&ui.invCat===k;
+    return `<div class="inv-o"><div class="inv-l"><span><b>${esc(o.nom)}</b>${num(o.qte)!==1?` <span class="muted">×${esc(o.qte)}</span>`:''}${o.harmonise?' <span class="harmo-mj" title="Harmonisé">✦</span>':''}${o.mystere?' <span class="badge" title="Mystérieux">?</span>':''}${cat?' <span class="muted">· catalogue</span>':o.de?` <span class="muted">· de ${esc(o.de)}</span>`:''}</span>
+      ${cat?`<button class="ico${cOuv?' on':''}" data-a="invCat" data-k="${esc(k)}" title="Modifier dans le catalogue" aria-label="Modifier ${esc(o.nom)} dans le catalogue">${ICO_CRAYON}</button>`
+        :o.uid?`<button class="ico${ed?' on':''}" data-a="invEd" data-k="${esc(k)}" title="Corriger" aria-label="Corriger ${esc(o.nom)}">${ICO_CRAYON}</button>`:''}</div>
+      ${o.desc&&!ed?`<div class="d">${esc(o.desc)}</div>`:''}
+      ${cOuv?`<div class="inv-cat">${formObjet(cat,cat.id)}<p class="muted">Enregistré en quittant le champ ; suit chez tous les joueurs qui l’ont.</p></div>`:''}
+      ${ed?`<div class="inv-ed"><input id="invNom" value="${esc(o.nom)}" aria-label="Nom"><input id="invQte" value="${esc(o.qte)}" inputmode="numeric" aria-label="Quantité" style="max-width:4.5em">
+        <input id="invDesc" class="full" value="${esc(o.desc||'')}" placeholder="Description" aria-label="Description">
+        <div class="full row"><button class="btn-s on" data-a="invOk" data-id="${id}" data-u="${esc(o.uid)}">Corriger chez le joueur</button><button class="btn-s" data-a="invRetirer" data-id="${id}" data-u="${esc(o.uid)}" data-n="${esc(o.nom)}">Retirer du sac</button></div></div>`:''}</div>`};
+  return `<div class="inv"><div class="inv-t"><span>Bourse : <b>${esc(orJ(e)??'0')} po</b></span><button class="btn-s${poOuv?' on':''}" data-a="jPo" data-id="${id}">± po</button></div>
+    ${poOuv?`<div class="row code-row"><input id="jPoVal" inputmode="decimal" placeholder="+2 ou -0,5 (en po)" autocomplete="off"><button data-a="jPoOk" data-id="${id}">Envoyer</button></div>`:''}
+    <div class="inv-t"><span>Sac</span></div>${inv.map(ligne).join('')||'<p class="muted">Sac vide.</p>'}
+    ${inv.some(o=>!o.uid)?'<p class="muted">Son app doit être mise à jour pour corriger ses propres objets.</p>':''}
+    <p class="muted">Les corrections arrivent dès que son app est ouverte.</p></div>`}
+const ICO_CRAYON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
+async function invClic(a,b){
+  switch(a){
+    case 'invOuvrir':ui.invOuv=ui.invOuv===b.dataset.id?null:b.dataset.id;render();return true;
+    case 'invEd':ui.invEd=ui.invEd===b.dataset.k?null:b.dataset.k;ui.invCat=null;render();return true;
+    case 'invCat':ui.invCat=ui.invCat===b.dataset.k?null:b.dataset.k;ui.invEd=null;render();return true;
+    case 'jPo':ui.jPo=ui.jPo===b.dataset.id?null:b.dataset.id;render();if(ui.jPo){const i=document.getElementById('jPoVal');if(i)i.focus()}return true;
+    case 'jPoOk':{const v=(document.getElementById('jPoVal')||{}).value||'',n=Math.round(parseFloat(v.replace(',','.').replace(/\s/g,''))*100);
+      if(!n){flash={err:1,t:'Montant en po, ex. 2 ou -0,5.'};renderDock();return true}
+      ui.jPo=null;await action('mj_joueur_action',{p_joueur:b.dataset.id,p_contenu:{action:'pieces',pc:n}},(n>0?'+':'−')+(Math.abs(n)/100).toLocaleString('fr-CH')+' po envoyé.');return true}
+    case 'invOk':{const nom=(document.getElementById('invNom')||{}).value||'',q=Math.max(0,Math.round(num((document.getElementById('invQte')||{}).value))),d=(document.getElementById('invDesc')||{}).value||'';
+      if(!nom.trim()&&q>0){flash={err:1,t:'Indique un nom.'};renderDock();return true}
+      ui.invEd=null;await action('mj_joueur_action',{p_joueur:b.dataset.id,p_contenu:{action:'corriger',uid:b.dataset.u,nom:nom.trim(),qte:q,desc:d.trim()}},q?'Correction envoyée.':'Retrait envoyé.');return true}
+    case 'invRetirer':{if(ui.confRetirer!=='inv:'+b.dataset.u){ui.confRetirer='inv:'+b.dataset.u;b.textContent='Retirer « '+b.dataset.n+' » ?';return true}
+      ui.confRetirer=null;ui.invEd=null;await action('mj_joueur_action',{p_joueur:b.dataset.id,p_contenu:{action:'corriger',uid:b.dataset.u,qte:0}},'Retrait envoyé.');return true}
+  }
+  return false}
 /* ---------- PNJ ----------
    Rangés par région. Losange plein = déjà rencontré par les joueurs (en clair sinon), ★ = PNJ principal (en tête de sa région).
    La fiche est un texte libre : chaque ligne « Veut : … » s'affiche avec son intitulé en gras ; « Note MJ : … » en rouge. */
@@ -1214,6 +1256,7 @@ function ongJoueurs(){
       ${caPP(j)}
       ${j.cle?`<div class="code"><span class="muted">Code :</span><b>${esc(jolieCle(j.cle))}</b><button class="btn-s" data-a="copierCode" data-c="${esc(jolieCle(j.cle))}">Copier</button></div>`:''}
       <button class="btn-s${j.absent?'':' on'}" data-a="presence" data-id="${esc(j.id)}" aria-pressed="${!j.absent}" style="margin-top:4px">${j.absent?'Absent · le remettre à la table':'À la table'}</button>
+      ${j.classe?(ui.invOuv===j.id?invJ(j):`<button class="lien-s" data-a="invOuvrir" data-id="${esc(j.id)}">Sac et bourse ▸</button>`):''}
       ${nouveauCode===j.id?'<p class="muted">Envoie ce code au joueur : il l’entre dans son app : écran d’accueil, « Retrouver un personnage » (ou onglet Fiche, « Sauvegarde en ligne », pour relier une fiche déjà importée).</p>':''}</div>`;
   return `<section><h2>Ajouter un joueur</h2><div class="row code-row"><input id="jnom" placeholder="Nom (joueur ou personnage)"><button data-a="ajoutJ">Ajouter</button></div></section>
     <section><h2>Joueurs</h2>${js.length?js.map(ligne).join(''):'<p class="muted">Aucun joueur. Ajoute-les ci-dessus.</p>'}</section>`;
@@ -1258,7 +1301,7 @@ function ongEnvois(){
     const vrai=e.o_cache?(e.o_nom||(e.secret&&e.secret.nom)):(e.secret&&e.secret.nom),nom=e.revele&&vrai?vrai:e.contenu.nom;
     const etiquette=[e.recu_le?'<span class="ok">reçu</span>':'<span class="muted">en attente</span>',e.harmonise?'<span class="harmo-mj">✦ harmonisé</span>':e.revele&&vrai?'<span class="muted">révélé</span>':''].filter(Boolean).join('');
     const btn=(a,t,cls='')=>`<button class="btn-s ${cls}" data-a="${a}" data-id="${esc(e.id)}">${t}</button>`;
-    return `<div class="ev"><div class="ev-l1"><span><b>${esc(nom)}</b>${num(e.contenu.qte)>1?' ×'+esc(e.contenu.qte):''} → ${esc(nomJ(e.joueur_id))}
+    return `<div class="ev"><div class="ev-l1"><span><b>${esc(nom)}</b>${num(e.contenu.qte)>1?' ×'+esc(e.contenu.qte):''} → ${esc(nomJ(e.joueur_id))}${e.contenu.de?` <span class="muted">(donné par ${esc(e.contenu.de)})</span>`:''}
       ${vrai&&!e.revele&&vrai!==e.contenu.nom?`<br><span class="muted">vrai nom : ${esc(vrai)}</span>`:''}
       <br><span class="muted">${new Date(e.envoye_le).toLocaleString('fr-CH',{dateStyle:'short',timeStyle:'short'})}</span></span><span class="etiq">${etiquette}</span></div>
       ${(e.o_cache&&!e.revele)||e.o_harmo||e.harmonise?`<div class="ev-btns">${e.o_cache&&!e.revele?btn('reveler','Révéler'):''}${e.harmonise?btn('rompre','Rompre l’harmonisation'):e.o_harmo?btn('harmoniser','✦ Harmoniser'):''}</div>`:''}</div>`}).join('');
@@ -1559,6 +1602,7 @@ document.addEventListener('click',async ev=>{
     case 'exporter':{try{const x=await rpc('mj_export',{p_code:code});telecharger(JSON.stringify(x,null,1),'export-'+(etat.campagne.nom||'campagne').replace(/[^\p{L}\p{N}]+/gu,'-')+'-'+new Date().toISOString().slice(0,10)+'.json');flash={t:'Export téléchargé.'}}catch(e){flash={err:1,t:erreur(e)}}render();return}
     case 'majApp':{b.textContent='Mise à jour…';b.disabled=true;try{localStorage.removeItem('dnd55.ref')}catch(e){}(self.caches?caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n)))):Promise.resolve()).catch(()=>{}).then(()=>Promise.all(['./','manifest.webmanifest'].map(u=>fetch(u,{cache:'reload'}).catch(()=>{})))).finally(()=>location.reload());return}
     case 'sortir':ui.confSortir=true;render();return;
+    case 'invOuvrir':case 'invEd':case 'invCat':case 'jPo':case 'jPoOk':case 'invOk':case 'invRetirer':await invClic(a,b);return;
     case 'jOuvrir':ui.jOuv=ui.jOuv===b.dataset.id?null:b.dataset.id;render();return;
     case 'presence':{const e=etat.joueurs.find(x=>x.id===b.dataset.id);if(!e)return;e.absent=!e.absent;render();
       try{await rpc('mj_joueur_presence',{p_code:code,p_id:e.id,p_absent:e.absent})}catch(er){e.absent=!e.absent;flash={err:1,t:'Présence non enregistrée : '+erreur(er)};render()}return}
